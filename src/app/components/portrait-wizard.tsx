@@ -307,11 +307,8 @@ export default function PortraitWizard() {
     const prev = () => setStyleIdx((i) => (i - 1 + STYLES.length) % STYLES.length);
     const next = () => setStyleIdx((i) => (i + 1) % STYLES.length);
     return (
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-xl">
         <StepIndicator step={step} />
-        <h2 className="mb-6 text-center font-[var(--font-playfair)] text-2xl font-bold text-white">
-          Choose your style
-        </h2>
 
         {/* Carousel row */}
         <div className="flex items-center gap-3">
