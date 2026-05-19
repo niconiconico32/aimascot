@@ -22,12 +22,8 @@ export default function Home() {
       </div>
 
       <header className="sticky top-0 z-50 border-b border-[var(--outline-variant)] bg-[color:rgba(249,249,252,0.8)] backdrop-blur-[10px]">
-        <div className="mx-auto flex h-20 w-full max-w-[var(--container-max)] items-center justify-between px-6">
-          <a href="#" className="font-[var(--font-playfair)] text-2xl font-extrabold text-[var(--on-surface)]">
-            Vibrant Paws
-          </a>
-
-          <nav className="hidden items-center gap-8 text-sm font-medium text-[var(--on-surface-variant)] md:flex">
+        <div className="relative mx-auto flex h-14 w-full max-w-[var(--container-max)] items-center px-3 sm:px-4">
+          <nav className="hidden items-center gap-5 text-xs font-medium text-[var(--on-surface-variant)] lg:flex">
             {NAV_LINKS.map((link) => (
               <a key={link.href} href={link.href} className="transition-colors hover:text-[var(--primary)]">
                 {link.label}
@@ -35,18 +31,29 @@ export default function Home() {
             ))}
           </nav>
 
+          <a href="#" className="absolute left-1/2 flex -translate-x-1/2 items-center" aria-label="Vibrant Paws home">
+            <Image
+              src="/logo/logo.png"
+              alt="Vibrant Paws"
+              width={160}
+              height={48}
+              priority
+              className="h-9 w-auto object-contain"
+            />
+          </a>
+
           <button
-            className="rounded-full p-2 text-[var(--on-surface)] transition-colors hover:text-[var(--primary)] md:hidden"
+            className="ml-auto rounded-full p-1 text-[var(--on-surface)] transition-colors hover:text-[var(--primary)] lg:hidden"
             aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={isMobileMenuOpen}
             onClick={() => setIsMobileMenuOpen((current) => !current)}
           >
-            <span className="material-symbols-outlined">{isMobileMenuOpen ? "close" : "menu"}</span>
+            <span className="material-symbols-outlined text-[20px]">{isMobileMenuOpen ? "close" : "menu"}</span>
           </button>
         </div>
 
         {isMobileMenuOpen ? (
-          <div className="border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-6 py-4 md:hidden">
+          <div className="border-t border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-6 py-4 lg:hidden">
             <nav className="flex flex-col gap-4 text-sm font-semibold text-[var(--on-surface)]">
               {NAV_LINKS.map((link) => (
                 <a
@@ -65,20 +72,13 @@ export default function Home() {
 
       <main className="flex flex-col bg-[var(--background)]">
         <section id="how-it-works" className="relative overflow-hidden bg-gradient-to-br from-[var(--primary)] via-[var(--primary-container)] to-[var(--secondary)] px-6 pb-16 pt-12 text-[var(--on-primary)] lg:py-24">
-          <div className="pointer-events-none absolute -right-40 -top-40 h-96 w-96 rounded-full bg-[var(--tertiary)]/25 blur-3xl" />
+          <div className="pointer-events-none absolute -right-40  h-96 w-96 rounded-full bg-[var(--tertiary)]/25 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-28 -left-20 h-80 w-80 rounded-full bg-[var(--secondary-container)]/30 blur-3xl" />
 
           <div className="relative z-10 mx-auto grid max-w-[var(--container-max)] grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-20">
             <div className="flex flex-col gap-7">
-              <span className="inline-flex w-fit rounded-full border border-white/30 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.08em]">
-                Modern Portrait Studio
-              </span>
-              <h1 className="type-display-lg text-center text-[var(--on-primary)] lg:text-left">
-                Turn your pet into a bold, joyful masterpiece.
-              </h1>
-              <p className="type-body-lg mx-auto max-w-xl text-center text-[color:rgba(255,255,255,0.88)] lg:mx-0 lg:text-left">
-                Pick a subject, choose a style, upload a photo and get a premium portrait preview in minutes.
-              </p>
+
+
 
               <PortraitWizard />
 

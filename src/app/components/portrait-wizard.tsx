@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 
@@ -7,11 +8,11 @@ type Step = 1 | 2 | 3;
 type Subject = "man" | "woman" | "couple" | "pet";
 type Style = "royalty" | "beach" | "shark";
 
-const SUBJECTS: { id: Subject; label: string; emoji: string; description: string }[] = [
-  { id: "man",    label: "Man",    emoji: "🧑",  description: "Solo male portrait" },
-  { id: "woman",  label: "Woman",  emoji: "👩",  description: "Solo female portrait" },
-  { id: "couple", label: "Couple", emoji: "💑",  description: "Two people together" },
-  { id: "pet",    label: "Pet",    emoji: "🐾",  description: "Dog, cat or any pet" },
+const SUBJECTS: { id: Subject; label: string; emoji: string; image: string; description: string }[] = [
+  { id: "man",    label: "Man",    emoji: "🧑", image: "/firstform/man.jpeg",     description: "Solo male portrait" },
+  { id: "woman",  label: "Woman",  emoji: "👩", image: "/firstform/woman.jpeg",   description: "Solo female portrait" },
+  { id: "couple", label: "Couple", emoji: "💑", image: "/firstform/couple.jpeg",  description: "Two people together" },
+  { id: "pet",    label: "Pet",    emoji: "🐾", image: "/firstform/pet.jpeg",     description: "Dog, cat or any pet" },
 ];
 
 const STYLES: { id: Style; label: string; emoji: string; description: string }[] = [
@@ -250,7 +251,7 @@ export default function PortraitWizard() {
         <div className="mb-6 text-sm text-[var(--on-surface-variant)]">~{secondsRemaining} seconds remaining</div>
         <div className="flex w-full items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-3 text-left">
           <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--surface-container-high)] text-3xl">
-            {loadingEmoji}
+            <span>{loadingEmoji}</span>
           </div>
           <div className="flex-1">
             <div className="flex items-center justify-between">
@@ -273,19 +274,26 @@ export default function PortraitWizard() {
     return (
       <div className="w-full max-w-xl">
         <StepIndicator step={step} />
-        <h2 className="mb-6 text-center font-[var(--font-playfair)] text-2xl font-bold text-white">
-          Who are we painting today?
-        </h2>
+
         <div className="grid grid-cols-2 gap-3">
           {SUBJECTS.map((s) => (
             <button
               key={s.id}
               onClick={() => handleSubjectSelect(s.id)}
-              className="flex flex-col items-center gap-3 rounded-[var(--radius-xl)] border-2 border-white/10 bg-white/10 p-6 text-center backdrop-blur-sm transition-all hover:scale-[1.02] hover:border-[var(--secondary-container)] hover:bg-white/20"
+              className="flex flex-col items-center gap-4 rounded-[var(--radius-xl)] border-2 border-white/10 bg-white/10 p-5 text-center backdrop-blur-sm transition-all hover:scale-[1.02] hover:border-[var(--secondary-container)] hover:bg-white/20"
             >
-              <span className="text-5xl">{s.emoji}</span>
-              <span className="text-base font-bold text-white">{s.label}</span>
-              <span className="text-xs text-white/60">{s.description}</span>
+              <div className="relative h-32 w-32 overflow-hidden rounded-full">
+                <Image
+                  src={s.image}
+                  alt={s.label}
+                  fill
+                  className="object-cover"
+                  sizes="128px"
+                />
+              </div>
+              <span className="text-lg font-bold text-white">
+                {s.label} {s.emoji}
+              </span>
             </button>
           ))}
         </div>
