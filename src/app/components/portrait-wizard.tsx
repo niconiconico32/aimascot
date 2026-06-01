@@ -191,10 +191,10 @@ export default function PortraitWizard() {
     fetch("/api/generate", { method: "POST", body })
       .then((res) => {
         if (!res.ok) throw new Error("API error");
-        return res.json() as Promise<{ imageUrl: string }>;
+        return res.json() as Promise<{ imageData: string }>;
       })
-      .then(({ imageUrl }) => {
-        generatedUrlRef.current = imageUrl;
+      .then(({ imageData }) => {
+        generatedUrlRef.current = imageData;
         apiDoneRef.current      = true;
       })
       .catch(() => {

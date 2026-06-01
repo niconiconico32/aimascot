@@ -92,15 +92,29 @@ export default function PreviewPage() {
         </div>
 
         {imagePreview ? (
-          <div className="mb-16 rounded-[var(--radius-xl)] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-[0_24px_40px_rgba(32,60,185,0.08)] md:p-6">
-            <div className="relative h-[50vh] min-h-[350px] w-full overflow-hidden rounded-[var(--radius-lg)] border border-[var(--outline-variant)] bg-[var(--surface-container-low)]">
+        <div className="mb-16 rounded-[var(--radius-xl)] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4 shadow-[0_24px_40px_rgba(32,60,185,0.08)] md:p-6">
+            {/* Security wrapper — blocks right-click, drag and "Save image as" */}
+            <div
+              className="relative h-[50vh] min-h-[350px] w-full overflow-hidden rounded-[var(--radius-lg)] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] select-none"
+              onContextMenu={(e) => e.preventDefault()}
+              onDragStart={(e) => e.preventDefault()}
+            >
               <Image
                 src={imagePreview}
-                alt="Generated portrait"
+                alt="Generated portrait preview"
                 fill
                 unoptimized
+                draggable={false}
                 sizes="(min-width: 1024px) 960px, 100vw"
-                className="object-contain p-2"
+                className="pointer-events-none object-contain p-2 select-none"
+              />
+              {/* Transparent overlay — intercepts right-click / drag so the browser
+                  never targets the <img> element directly */}
+              <div
+                aria-hidden
+                className="absolute inset-0 z-10 cursor-default"
+                onContextMenu={(e) => e.preventDefault()}
+                onDragStart={(e) => e.preventDefault()}
               />
             </div>
           </div>
