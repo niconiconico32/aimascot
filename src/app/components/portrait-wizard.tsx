@@ -30,7 +30,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // ─── TEST MODE ──────────────────────────────────────────────────────────────
 // Set to `true` to bypass the AI API and use the uploaded photo directly.
 // See ENABLE-API.md in the project root for instructions to re-enable.
-const TEST_MODE = true;
+const TEST_MODE = false;
 // ────────────────────────────────────────────────────────────────────────────
 
 function StepIndicator({ step }: { step: number }) {
@@ -274,26 +274,42 @@ export default function PortraitWizard() {
     return (
       <div className="w-full max-w-xl">
         <StepIndicator step={step} />
+        <p className="mb-4 text-center text-sm font-medium text-white/60">
+          Who is this portrait for?
+        </p>
 
         <div className="grid grid-cols-2 gap-3">
           {SUBJECTS.map((s) => (
             <button
               key={s.id}
               onClick={() => handleSubjectSelect(s.id)}
-              className="flex flex-col items-center gap-4 rounded-[var(--radius-xl)] border-2 border-white/10 bg-white/10 p-5 text-center backdrop-blur-sm transition-all hover:scale-[1.02] hover:border-[var(--secondary-container)] hover:bg-white/20"
+              className="group overflow-hidden rounded-[var(--radius-xl)] border-2 border-white/15 bg-white/5 text-left transition-all duration-200 hover:border-[var(--tertiary-fixed)] hover:shadow-lg hover:shadow-black/25 active:scale-[0.97]"
             >
-              <div className="relative h-32 w-32 overflow-hidden rounded-full">
+              {/* Image */}
+              <div className="relative w-full" style={{ aspectRatio: "1/1" }}>
                 <Image
                   src={s.image}
                   alt={s.label}
                   fill
-                  className="object-cover"
-                  sizes="128px"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 640px) 50vw, 280px"
                 />
+                {/* Bottom gradient for text legibility */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
               </div>
-              <span className="text-lg font-bold text-white">
-                {s.label} {s.emoji}
-              </span>
+
+              {/* Label row */}
+              <div className="flex items-center justify-between px-3.5 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-white">
+                    {s.label} {s.emoji}
+                  </p>
+                  <p className="truncate text-xs text-white/55">{s.description}</p>
+                </div>
+                <span className="ml-2 shrink-0 text-xl text-white/30 transition-colors duration-200 group-hover:text-[var(--tertiary-fixed)]">
+                  ›
+                </span>
+              </div>
             </button>
           ))}
         </div>
@@ -324,7 +340,7 @@ export default function PortraitWizard() {
           {/* Card */}
           <div className="flex-1 overflow-hidden rounded-[var(--radius-xl)] border-2 border-white/10 bg-white/10 backdrop-blur-sm">
             {/* Image */}
-            <div className="relative w-full" style={{ aspectRatio: "2/3" }}>
+            <div className="relative w-full" style={{ aspectRatio: "14/15" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/style-preview.jpg"
