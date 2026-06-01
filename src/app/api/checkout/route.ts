@@ -5,6 +5,15 @@ import { getSupabaseServerClient } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
 
+// ─── Simplified payload: sent from the preview page (uses a pre-configured
+//     Stripe price ID instead of dynamic price_data) ───────────────────────
+type SimplifiedCheckoutPayload = {
+  priceId: string;
+  productType: "canvas" | "digital_download";
+  size: string;
+  generatedImageUrl: string; // clean Fal URL — never exposed to the browser
+};
+
 type CheckoutUpsell = {
   id: string;
   name: string;
@@ -18,6 +27,7 @@ type CheckoutPayload = {
   basePrice: number;
   size: string;
   artworkUrl: string;
+  generatedImageUrl?: string; // optional: clean URL forwarded to Stripe metadata
   shippingFee: number;
   giftWrap: boolean;
   smsUpdates: boolean;
@@ -33,7 +43,56 @@ function toCents(amount: number) {
 
 export async function POST(request: NextRequest) {
   try {
-    const payload = (await request.json()) as CheckoutPayload;
+    const rawPayload = await request.json();
+    const stripe  = getStripeServerClient();
+    const supabase = getSupabaseServerClient();
+    const origin   = request.nextUrl.origin;
+
+    // ── Simplified flow: preview page sends { priceId, productType, size, generatedImageUrl }
+    if ("priceId" in rawPayload) {
+      const { priceId, productType, size, generatedImageUrl } =
+        rawPayload as SimplifiedCheckoutPayload;
+
+      if (!priceId || !productType || !generatedImageUrl) {
+        return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        line_items: [{ price: priceId, quantity: 1 }],
+        success_url: `${origin}/order-confirmed?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/preview`,
+        billing_address_collection: "auto",
+        phone_number_collection: { enabled: true },
+        ...(productType === "canvas" && {
+          shipping_address_collection: {
+            allowed_countries: ["US", "CA", "GB", "IE", "ES", "FR", "DE", "IT", "AU", "NZ"],
+          },
+        }),
+        metadata: {
+          productType,
+          size,
+          generatedImageUrl, // stored in Stripe — webhook uses this to trigger Gelato / upscale
+        },
+      });
+
+      if (!session.url) {
+        return NextResponse.json({ error: "Stripe did not return a checkout URL." }, { status: 500 });
+      }
+
+      await supabase.from("orders").insert({
+        stripe_session_id: session.id,
+        product_type: productType,
+        size_selected: productType === "canvas" ? size : null,
+        artwork_url: generatedImageUrl,
+        status: "pending_payment",
+      });
+
+      return NextResponse.json({ sessionId: session.id, url: session.url });
+    }
+
+    // ── Full cart flow: existing comprehensive payload ────────────────────────
+    const payload = rawPayload as CheckoutPayload;
 
     if (
       !payload.packageTitle ||
@@ -44,9 +103,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid checkout payload." }, { status: 400 });
     }
 
-    const stripe = getStripeServerClient();
-    const supabase = getSupabaseServerClient();
-    const origin = request.nextUrl.origin;
     const cancelPath = payload.cancelPath?.startsWith("/") ? payload.cancelPath : "/cart";
 
     const lineItems = [
@@ -129,6 +185,8 @@ export async function POST(request: NextRequest) {
         size: payload.size,
         smsUpdates: String(payload.smsUpdates),
         notes: payload.notes.slice(0, 500),
+        // Include clean image URL so the webhook can trigger printing / upscaling
+        ...(payload.generatedImageUrl && { generatedImageUrl: payload.generatedImageUrl }),
       },
     });
 
@@ -149,7 +207,7 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ sessionId: session.id, url: session.url });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown checkout error.";
     return NextResponse.json({ error: message }, { status: 500 });
