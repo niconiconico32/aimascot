@@ -49,51 +49,69 @@ function buildPrompt(subject: string, style: string): string {
  * Downloads the image from `url`, composites a repeating diagonal
  * "CROWNED PORTRAITS PREVIEW" watermark at low opacity, and returns
  * the result as a JPEG Buffer (max 1 200 px wide, q=85).
+ *
+ * Uses sharp's native Pango text renderer instead of librsvg SVG text so that
+ * characters never show as empty boxes on Windows (librsvg has no system-font
+ * access in the pre-built sharp binary; Pango/libvips does).
  */
 async function applyWatermark(url: string): Promise<Buffer> {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Failed to fetch generated image: ${response.status}`);
   const rawBuffer = Buffer.from(await response.arrayBuffer());
 
-  // Resize to a fixed preview width — fast and keeps sessionStorage size sane
-  const base = sharp(rawBuffer).resize({ width: 1200, withoutEnlargement: true });
-  const { width: w = 1200, height: h = 1600 } = await base.clone().metadata();
+  // Resize to preview width — keeps base64 payload small enough for sessionStorage
+  const baseBuffer = await sharp(rawBuffer)
+    .resize({ width: 1200, withoutEnlargement: true })
+    .toBuffer();
 
-  // Build a repeating diagonal SVG watermark that covers the entire canvas
-  const label   = "CROWNED PORTRAITS PREVIEW";
-  const fontSize = Math.max(20, Math.round(w / 18));
-  const stepX    = fontSize * 12;   // horizontal spacing between copies
-  const stepY    = fontSize * 5;    // vertical spacing between rows
-  const angle    = -30;
+  const { width: w = 1200, height: h = 1600 } = await sharp(baseBuffer).metadata();
 
-  const texts: string[] = [];
-  // Generate enough copies to fill even after rotation
-  for (let row = -2; row * stepY < h + stepY * 2; row++) {
-    for (let col = -1; col * stepX < w + stepX; col++) {
-      const x = col * stepX;
-      const y = row * stepY;
-      texts.push(
-        `<text x="${x}" y="${y}"
-          transform="rotate(${angle} ${x} ${y})"
-          font-size="${fontSize}"
-          font-family="Arial, Helvetica, sans-serif"
-          font-weight="bold"
-          fill="white"
-          fill-opacity="0.18"
-          letter-spacing="2">${label}</text>`
-      );
+  const label    = "CROWNED PORTRAITS PREVIEW";
+  // Target ~133 px tall text (double the previous ~67 px).
+  // sharp text input has no fontSize property; size is set via Pango markup
+  // (pango units = points × 1024, and 1 pt ≈ 1 px at the default 72 dpi).
+  const fontPt   = Math.max(40, Math.round(w / 9));
+  const pangoSize = fontPt * 1024;
+
+  // ── Step 1: render one text tile with libvips/Pango (no system font needed) ──
+  const rawTile = await sharp({
+    text: {
+      text: `<span size="${pangoSize}" foreground="white" alpha="12000" font_weight="bold">${label}</span>`,
+      font: "sans-serif",
+      dpi: 72,
+      rgba: true,   // transparent background
+    },
+  })
+    .png()
+    .toBuffer();
+
+  // ── Step 2: rotate the tile to create the diagonal watermark angle ──────────
+  const rotatedTile = await sharp(rawTile)
+    .rotate(-30, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png()
+    .toBuffer();
+
+  const { width: tw = 600, height: th = 120 } = await sharp(rotatedTile).metadata();
+
+  // ── Step 3: tile the rotated tile across the full canvas ────────────────────
+  const stepX = tw;                      // place tiles side-by-side horizontally
+  const stepY = Math.round(th * 1.6);   // row spacing (slightly more than tile height)
+  const composites: sharp.OverlayOptions[] = [];
+
+  for (let row = 0; row * stepY < h + th; row++) {
+    // Stagger alternate rows by half a tile width for denser, even coverage
+    const offsetX = row % 2 !== 0 ? Math.round(stepX / 2) : 0;
+    for (let col = 0; col * stepX - offsetX < w + tw; col++) {
+      const left = col * stepX - offsetX;
+      const top  = row * stepY;
+      // sharp clips overlays that extend beyond the base image bounds — safe to
+      // pass values outside [0, w) / [0, h) here.
+      composites.push({ input: rotatedTile, left, top, blend: "over" });
     }
   }
 
-  const svg = Buffer.from(
-    `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
-      ${texts.join("\n")}
-    </svg>`
-  );
-
-  return base
-    .clone()
-    .composite([{ input: svg, gravity: "northwest" }])
+  return sharp(baseBuffer)
+    .composite(composites)
     .jpeg({ quality: 85 })
     .toBuffer();
 }
