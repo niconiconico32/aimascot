@@ -1,37 +1,54 @@
 "use client";
 
+import { createClient } from "@supabase/supabase-js";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 
+import { SUBJECTS, STYLES_BY_SUBJECT, type Style, type Subject } from "@/data/styles";
+
+function getBrowserClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!url) throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL environment variable.");
+  if (!key) throw new Error("Missing NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY environment variable.");
+  return createClient(url, key);
+}
+
 type Step = 1 | 2 | 3;
-type Subject = "man" | "woman" | "couple" | "pet";
-type Style = "royalty" | "beach" | "shark";
-
-const SUBJECTS: { id: Subject; label: string; emoji: string; image: string; description: string }[] = [
-  { id: "man",    label: "Man",    emoji: "🧑", image: "/firstform/man.jpeg",     description: "Solo male portrait" },
-  { id: "woman",  label: "Woman",  emoji: "👩", image: "/firstform/woman.jpeg",   description: "Solo female portrait" },
-  { id: "couple", label: "Couple", emoji: "💑", image: "/firstform/couple.jpeg",  description: "Two people together" },
-  { id: "pet",    label: "Pet",    emoji: "🐾", image: "/firstform/pet.jpeg",     description: "Dog, cat or any pet" },
-];
-
-const STYLES: { id: Style; label: string; emoji: string; description: string }[] = [
-  { id: "royalty", label: "Royalty",      emoji: "👑", description: "18th-century royal oil painting" },
-  { id: "beach",   label: "On the Beach", emoji: "🏖️", description: "Golden-hour tropical scene" },
-  { id: "shark",   label: "Shark Rider",  emoji: "🦈", description: "Epic shark-riding adventure" },
-];
 
 const STEPS = ["Subject", "Style", "Upload"];
 const TOTAL_SECONDS = 45;
 const TICK_MS = 100;
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 // ─── TEST MODE ──────────────────────────────────────────────────────────────
 // Set to `true` to bypass the AI API and use the uploaded photo directly.
 // See ENABLE-API.md in the project root for instructions to re-enable.
-const TEST_MODE = false;
+const TEST_MODE = true;
 // ────────────────────────────────────────────────────────────────────────────
+
+const STATUS_MESSAGES = [
+  "Painting your masterpiece…",
+  "Applying the finishing touches…",
+  "Your portrait is coming to life…",
+  "Almost there…",
+  "Adding the magic…",
+];
+
+const LOADING_TESTIMONIALS = [
+  { name: "Kurt Einwaechter", text: "My grandma loved it!",                                          image: "/testimonials/test1.jpeg" },
+  { name: "Jeff Wolf",        text: "My daughter looks so happy! Loved her birthday gift.",           image: "/testimonials/test2.jpeg" },
+  { name: "Jill Lerner",      text: "I knew he would like it. Thank you!",                            image: "/testimonials/test3.jpeg" },
+  { name: "Maria S.",         text: "My wife loved the tribute to Milo. Thanks",                      image: "/testimonials/test4.jpeg" },
+  { name: "Tom H.",           text: "Finally, my queen.",                                             image: "/testimonials/test5.jpeg" },
+  { name: "Sarah M.",         text: "Looks like a real royal portrait! Unbelievable.",                 image: "/testimonials/test6.jpeg" },
+  { name: "Chris P.",         text: "I absolutely win Father's Day with this gift. Thanks!",           image: "/testimonials/test7.jpeg" },
+  { name: "Laura G.",         text: "Cookie looking majestic!",                                       image: "/testimonials/test8.jpeg" },
+  { name: "Daniel R.",        text: "Ordered for my wife's birthday. She cried happy tears.",         image: "/testimonials/test9.jpeg" },
+  { name: "Emma T.",          text: "Shipping was super fast and quality is amazing!",                 image: "/testimonials/test10.jpeg" },
+  { name: "Ryan K.",          text: "I did not expect it to look this good. Blew my mind.",            image: "/testimonials/test11.jpeg" },
+  { name: "Olivia F.",        text: "My wife loved her anniversary gift. Would recommend.",           image: "/testimonials/test12.jpeg" },
+];
 
 function StepIndicator({ step }: { step: number }) {
   return (
@@ -86,25 +103,19 @@ export default function PortraitWizard() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [personalizeText, setPersonalizeText] = useState("");
-  const [notifyEmail, setNotifyEmail] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return sessionStorage.getItem("leadEmail") ?? localStorage.getItem("leadEmail") ?? "";
-  });
-  const [notifyEmailError, setNotifyEmailError] = useState<string | null>(null);
-
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const apiDoneRef = useRef(false);
   const generatedUrlRef = useRef<string | null>(null);
+  const [statusIdx, setStatusIdx] = useState(0);
+  const [testimonialIdx, setTestimonialIdx] = useState(0);
 
-  const handleSubjectSelect = (s: Subject) => { setSubject(s); setStep(2); };
-  const handleStyleSelect   = (s: Style)   => { setStyle(s);   setStep(3); };
-
-  const validateNotifyEmail = (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return "Email is required so we can notify you when the portrait is ready.";
-    if (!EMAIL_REGEX.test(trimmed)) return "Enter a valid email address.";
-    return null;
+  const handleSubjectSelect = (s: Subject) => {
+    setSubject(s);
+    setStyle(null);
+    setStyleIdx(0);
+    setStep(2);
   };
+  const handleStyleSelect   = (s: Style)   => { setStyle(s);   setStep(3); };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -131,44 +142,25 @@ export default function PortraitWizard() {
   const handleGenerate = () => {
     if (!selectedFile) return;
 
-    const emailError = validateNotifyEmail(notifyEmail);
-    if (emailError) {
-      setNotifyEmailError(emailError);
-      return;
-    }
-
-    const trimmedEmail = notifyEmail.trim();
-    const leadDraft = JSON.stringify({
-      email: trimmedEmail,
-      subject,
-      style,
-      capturedAt: new Date().toISOString(),
-    });
-
-    sessionStorage.setItem("leadEmail", trimmedEmail);
-    localStorage.setItem("leadEmail", trimmedEmail);
-    sessionStorage.setItem("portraitLeadDraft", leadDraft);
-    localStorage.setItem("portraitLeadDraft", leadDraft);
-    setNotifyEmailError(null);
-
-    // Fire-and-forget: persist lead to Supabase via server route
-    void fetch("/api/leads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: trimmedEmail,
-        subject,
-        style,
-        personalizeText: personalizeText.trim() || undefined,
-      }),
-    });
-
     if (TEST_MODE) {
       // ── Test path: use the uploaded photo directly, no API call ──
+      setIsLoading(true);
       const reader = new FileReader();
       reader.onloadend = () => {
-        sessionStorage.setItem("generatedPortraitUrl", reader.result as string);
-        router.push("/preview");
+        setTimeout(() => {
+          sessionStorage.setItem("generatedPortraitUrl", reader.result as string);
+          sessionStorage.setItem("remainingAttempts", "5");
+          sessionStorage.setItem(
+            "generationParams",
+            JSON.stringify({
+              originalFileName: selectedFile.name,
+              subjectId: subject,
+              styleId: style,
+              personalizeText: personalizeText.trim() || undefined,
+            }),
+          );
+          router.push("/preview");
+        }, 2000);
       };
       reader.readAsDataURL(selectedFile);
       return;
@@ -182,20 +174,65 @@ export default function PortraitWizard() {
     setErrorMessage(null);
     setIsLoading(true);
 
-    const body = new FormData();
-    body.append("image", selectedFile);
-    if (subject) body.append("subject", subject);
-    if (style)   body.append("style", style);
-    if (personalizeText.trim()) body.append("personalize", personalizeText.trim());
+    const ext = selectedFile.name.split(".").pop() ?? "jpg";
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
 
-    fetch("/api/generate", { method: "POST", body })
-      .then((res) => {
-        if (!res.ok) throw new Error("API error");
-        return res.json() as Promise<{ imageData: string }>;
+    getBrowserClient().storage
+      .from("uploaded_photos")
+      .upload(fileName, selectedFile)
+      .then(({ error: uploadError }) => {
+        if (uploadError) {
+          setErrorMessage(uploadError.message);
+          setIsLoading(false);
+          return;
+        }
+
+        const payload: Record<string, string | undefined> = {
+          fileName,
+          subject: subject ?? undefined,
+          style: style ?? undefined,
+        };
+        if (subject && style) {
+          const selectedStyle = STYLES_BY_SUBJECT[subject].find((option) => option.id === style);
+          if (selectedStyle) payload.stylePrompt = selectedStyle.falPrompt;
+        }
+        if (personalizeText.trim()) payload.personalizeText = personalizeText.trim();
+
+        return fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
       })
-      .then(({ imageData }) => {
+      .then((res) => {
+        if (!res) return; // upload failed, already handled above
+        if (!res.ok) throw new Error("API error");
+        return res.json() as Promise<{ imageData: string; cleanImageUrl?: string }>;
+      })
+      .then((data) => {
+        if (!data) return;
+        const { imageData, cleanImageUrl, remainingAttempts } = data as {
+          imageData: string;
+          cleanImageUrl?: string;
+          remainingAttempts?: number;
+        };
         generatedUrlRef.current = imageData;
-        apiDoneRef.current      = true;
+        if (cleanImageUrl) {
+          sessionStorage.setItem("cleanPortraitUrl", cleanImageUrl);
+        }
+        if (typeof remainingAttempts === "number") {
+          sessionStorage.setItem("remainingAttempts", String(remainingAttempts));
+        }
+        sessionStorage.setItem(
+          "generationParams",
+          JSON.stringify({
+            originalFileName: fileName,
+            subjectId: subject,
+            styleId: style,
+            personalizeText: personalizeText.trim() || undefined,
+          }),
+        );
+        apiDoneRef.current = true;
       })
       .catch(() => {
         setErrorMessage("Portrait generation failed. Please try again.");
@@ -232,10 +269,19 @@ export default function PortraitWizard() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [isLoading, router]);
 
+  /* ── Rotate status messages and testimonials during loading ── */
+  useEffect(() => {
+    if (!isLoading) return;
+    const id = setInterval(() => {
+      setStatusIdx((i) => (i + 1) % STATUS_MESSAGES.length);
+      setTestimonialIdx((i) => (i + 1) % LOADING_TESTIMONIALS.length);
+    }, 4000);
+    return () => clearInterval(id);
+  }, [isLoading]);
+
   /* ──────────────── Loading screen ──────────────── */
   if (isLoading) {
-    const loadingEmoji =
-      subject === "pet" ? "🐾" : subject === "couple" ? "💑" : subject === "woman" ? "👸" : "🤴";
+    const testimonial = LOADING_TESTIMONIALS[testimonialIdx];
     return (
       <div className="w-full max-w-xl rounded-[var(--radius-xl)] border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-6 text-center shadow-[0_20px_30px_rgba(32,60,185,0.08)]">
         <h2 className="mb-4 font-[var(--font-playfair)] text-2xl font-bold text-[var(--on-surface)]">
@@ -248,18 +294,28 @@ export default function PortraitWizard() {
           />
         </div>
         <div className="mb-1 text-3xl font-semibold text-[var(--on-surface)]">{progress}%</div>
-        <div className="mb-6 text-sm text-[var(--on-surface-variant)]">~{secondsRemaining} seconds remaining</div>
+        <div className="mb-2 text-sm text-[var(--on-surface-variant)]">
+          {STATUS_MESSAGES[statusIdx]}
+        </div>
+        <div className="mb-6 text-xs text-[var(--on-surface-variant)]">~{secondsRemaining} seconds remaining</div>
         <div className="flex w-full items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] p-3 text-left">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--surface-container-high)] text-3xl">
-            <span>{loadingEmoji}</span>
+          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[var(--radius-md)]">
+            <Image
+              src={testimonial.image}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="64px"
+              unoptimized
+            />
           </div>
           <div className="flex-1">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-[var(--on-surface)]">Sarah M.</span>
+              <span className="text-sm font-bold text-[var(--on-surface)]">{testimonial.name}</span>
               <div className="text-xs text-[var(--tertiary-container)]">★★★★★</div>
             </div>
             <p className="mt-1 text-xs italic text-[var(--on-surface-variant)]">
-              &quot;Absolutely stunning — looks like a real royal portrait!&quot;
+              &quot;{testimonial.text}&quot;
             </p>
           </div>
         </div>
@@ -319,9 +375,12 @@ export default function PortraitWizard() {
 
   /* ──────────────── Step 2: Style (carousel) ──────────────── */
   if (step === 2) {
-    const current = STYLES[styleIdx];
-    const prev = () => setStyleIdx((i) => (i - 1 + STYLES.length) % STYLES.length);
-    const next = () => setStyleIdx((i) => (i + 1) % STYLES.length);
+    if (!subject) return null;
+
+    const styles = STYLES_BY_SUBJECT[subject];
+    const current = styles[styleIdx] ?? styles[0];
+    const prev = () => setStyleIdx((i) => (i - 1 + styles.length) % styles.length);
+    const next = () => setStyleIdx((i) => (i + 1) % styles.length);
     return (
       <div className="w-full max-w-xl">
         <StepIndicator step={step} />
@@ -343,7 +402,7 @@ export default function PortraitWizard() {
             <div className="relative w-full" style={{ aspectRatio: "14/15" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/style-preview.jpg"
+                src={current.previewImage}
                 alt={current.label}
                 className="h-full w-full object-cover"
               />
@@ -369,7 +428,7 @@ export default function PortraitWizard() {
 
         {/* Dots */}
         <div className="mt-4 flex justify-center gap-2">
-          {STYLES.map((_, i) => (
+          {styles.map((_, i) => (
             <button
               key={i}
               onClick={() => setStyleIdx(i)}
@@ -432,31 +491,6 @@ export default function PortraitWizard() {
               <p className="truncate text-sm font-semibold text-white">{selectedFile.name}</p>
               <p className="mt-0.5 text-xs text-white/50">Ready to paint</p>
             </div>
-          </div>
-
-          <div className="mb-4">
-            <label className="mb-1.5 block text-sm font-semibold text-white">
-              Get notified when your portrait is ready
-            </label>
-            <input
-              type="email"
-              value={notifyEmail}
-              onChange={(event) => {
-                setNotifyEmail(event.target.value);
-                if (notifyEmailError) setNotifyEmailError(validateNotifyEmail(event.target.value));
-              }}
-              onBlur={(event) => setNotifyEmailError(validateNotifyEmail(event.target.value))}
-              placeholder="you@example.com"
-              autoComplete="email"
-              inputMode="email"
-              maxLength={120}
-              className="h-14 w-full rounded-[var(--radius-default)] border border-white/20 bg-[color:rgba(219,222,255,0.2)] px-4 py-3 text-sm text-white placeholder-white/50 outline-none transition focus:border-[var(--primary-fixed)] focus:border-2"
-            />
-            {notifyEmailError ? (
-              <p className="mt-2 text-xs text-[rgb(255,205,205)]">{notifyEmailError}</p>
-            ) : (
-              <p className="mt-2 text-xs text-white/60">We use this for ready alerts and abandoned-cart follow-up.</p>
-            )}
           </div>
 
           {/* Personalize input */}

@@ -148,6 +148,9 @@ function CartPageContent() {
           basePrice,
           size,
           artworkUrl: imagePreview,
+          // Forward the clean (non-watermarked) Fal URL so the webhook can
+          // upscale to 4K and send to Gelato / attach to delivery email.
+          generatedImageUrl: sessionStorage.getItem("cleanPortraitUrl") ?? "",
           shippingFee: summary.shippingFee,
           giftWrap,
           smsUpdates,

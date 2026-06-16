@@ -41,6 +41,15 @@ export function getCanvasProductUid(size: string): string {
   return CANVAS_PRODUCT_UIDS[matchedSize ?? size] ?? CANVAS_PRODUCT_UIDS["8 x 10"] ?? "REPLACE_WITH_GELATO_UID_8X10";
 }
 
+/** Returns the Gelato productUid for the mug, reading MUG_PRODUCT_UID from env. */
+export function getMugProductUid(): string {
+  const uid = (process.env.MUG_PRODUCT_UID ?? "").trim();
+  if (!uid) {
+    throw new Error("MUG_PRODUCT_UID environment variable is not set.");
+  }
+  return uid;
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------

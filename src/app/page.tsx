@@ -12,6 +12,21 @@ const NAV_LINKS = [
   { href: "#faq", label: "FAQ" },
 ];
 
+const TESTIMONIALS_IMAGE_ORDER = [
+  "test1.jpeg",
+  "test2.jpeg",
+  "test3.jpeg",
+  "test4.jpeg",
+  "test5.jpeg",
+  "test6.jpeg",
+  "test7.jpeg",
+  "test8.jpeg",
+  "test9.jpeg",
+  "test10.jpeg",
+  "test11.jpeg",
+  "test12.jpeg",
+];
+
 export default function Home() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -31,10 +46,10 @@ export default function Home() {
             ))}
           </nav>
 
-          <a href="#" className="absolute left-1/2 flex -translate-x-1/2 items-center" aria-label="Vibrant Paws home">
+          <a href="#" className="absolute left-1/2 flex -translate-x-1/2 items-center" aria-label="Crowned Portraits home">
             <Image
               src="/logo/logo.png"
-              alt="Vibrant Paws"
+              alt="Crowned Portraits"
               width={160}
               height={48}
               priority
@@ -102,8 +117,8 @@ export default function Home() {
               <div className="rounded-[var(--radius-xl)] bg-[var(--surface-container-low)] p-3 shadow-[0_16px_30px_rgba(32,60,185,0.1)]">
                 <div className="relative aspect-[3/4] overflow-hidden rounded-[var(--radius-lg)]">
                   <Image
-                    src="https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?w=800&auto=format&fit=crop&q=80"
-                    alt="Royal pet portrait"
+                    src="/examples/example1.jpeg"
+                    alt="Royal king portrait example"
                     fill
                     sizes="(min-width: 1024px) 24vw, 45vw"
                     className="object-cover"
@@ -113,8 +128,8 @@ export default function Home() {
               <div className="mt-8 rounded-[var(--radius-xl)] bg-[var(--surface-container-low)] p-3 shadow-[0_16px_30px_rgba(32,60,185,0.1)]">
                 <div className="relative aspect-[3/4] overflow-hidden rounded-[var(--radius-lg)]">
                   <Image
-                    src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=800&auto=format&fit=crop&q=80"
-                    alt="Vibrant dog portrait"
+                    src="/examples/example2.jpeg"
+                    alt="Royal queen portrait example"
                     fill
                     sizes="(min-width: 1024px) 24vw, 45vw"
                     className="object-cover"
@@ -124,8 +139,8 @@ export default function Home() {
               <div className="-mt-4 rounded-[var(--radius-xl)] bg-[var(--surface-container-low)] p-3 shadow-[0_16px_30px_rgba(32,60,185,0.1)]">
                 <div className="relative aspect-[3/4] overflow-hidden rounded-[var(--radius-lg)]">
                   <Image
-                    src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&auto=format&fit=crop&q=80"
-                    alt="Playful portrait style"
+                    src="/examples/example3.jpeg"
+                    alt="Royal dog portrait example"
                     fill
                     sizes="(min-width: 1024px) 24vw, 45vw"
                     className="object-cover"
@@ -135,8 +150,8 @@ export default function Home() {
               <div className="mt-4 rounded-[var(--radius-xl)] bg-[var(--surface-container-low)] p-3 shadow-[0_16px_30px_rgba(32,60,185,0.1)]">
                 <div className="relative aspect-[3/4] overflow-hidden rounded-[var(--radius-lg)]">
                   <Image
-                    src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=800&auto=format&fit=crop&q=80"
-                    alt="Premium pet portrait"
+                    src="/examples/example4.jpeg"
+                    alt="Royal knight portrait example"
                     fill
                     sizes="(min-width: 1024px) 24vw, 45vw"
                     className="object-cover"
@@ -154,9 +169,9 @@ export default function Home() {
             <div className="mb-10 text-center">
               <h2 className="font-[var(--font-playfair)] text-3xl font-extrabold leading-tight text-white sm:text-4xl lg:text-5xl">
                 Why{" "}
-                <span className="text-[var(--tertiary-container)]">350,000+</span>{" "}
+                <span className="text-[var(--tertiary-container)]">50,000+</span>{" "}
                 customers love{" "}
-                <span className="italic text-[var(--tertiary-container)]">Vibrant Paws</span>
+                <span className="italic text-[var(--tertiary-container)]">Crowned Portraits</span>
               </h2>
               <p className="mt-3 text-sm text-white/70 sm:text-base">
                 See your royal portrait in seconds — free preview, no card needed
@@ -277,83 +292,65 @@ export default function Home() {
             {/* Grid: 2 cols always on mobile, 3 cols on lg */}
             <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
               {[
-                { name: "Kurt Einwaechter", date: "1/19/2026", text: "The Godfather loved it!" },
-                { name: "Jeff Wolf",        date: "1/11/2026", text: "The Wife loved it! And I love looking at it!!" },
-                { name: "Jill Lerner",      date: "12/27/2025", text: "Big hit!!!!!!! Thank you!!!!" },
-                { name: "Maria S.",         date: "2/3/2026",  text: "Absolutely stunning. Best gift I've ever given." },
-                { name: "Tom H.",           date: "1/28/2026", text: "My dog looks absolutely regal. 10/10!" },
+                { name: "Kurt Einwaechter", date: "1/19/2026", text: "My grandma loved it!" },
+                { name: "Jeff Wolf",        date: "1/11/2026", text: "My daughter looks so happy! Loved her birthday gift." },
+                { name: "Jill Lerner",      date: "12/27/2025", text: "I knew he would like it. Thank you!" },
+                { name: "Maria S.",         date: "2/3/2026",  text: "My wife loved the tribute to Milo. Thanks" },
+                { name: "Tom H.",           date: "1/28/2026", text: "Finally, my queen." },
                 { name: "Sarah M.",         date: "2/14/2026", text: "Looks like a real royal portrait! Unbelievable." },
-                { name: "Chris P.",         date: "12/10/2025", text: "Got it framed and hung in the living room. Everyone asks about it." },
-                { name: "Laura G.",         date: "1/5/2026",  text: "My cat is now officially royalty. She approves." },
-                { name: "Daniel R.",        date: "3/1/2026",  text: "Ordered for my mom's birthday. She cried happy tears." },
+                { name: "Chris P.",         date: "12/10/2025", text: "I absolutely win Father's Day with this gift. Thanks!" },
+                { name: "Laura G.",         date: "1/5/2026",  text: "Cookie looking majestic!" },
+                { name: "Daniel R.",        date: "3/1/2026",  text: "Ordered for my wife's birthday. She cried happy tears." },
                 { name: "Emma T.",          date: "2/22/2026", text: "Shipping was super fast and quality is amazing!" },
                 { name: "Ryan K.",          date: "3/8/2026",  text: "I did not expect it to look this good. Blew my mind." },
-                { name: "Olivia F.",        date: "1/30/2026", text: "Got three made for my whole family. Will order again." },
-                { name: "James B.",         date: "12/18/2025", text: "Perfect holiday gift. Everyone at the party loved it." },
-                { name: "Sophia L.",        date: "2/8/2026",  text: "The likeness is incredible. Feels hand-painted." },
-                { name: "Noah C.",          date: "3/15/2026", text: "Couple portrait looked like something from a museum." },
-                { name: "Ava M.",           date: "1/22/2026", text: "Even my skeptical husband admitted it looked amazing." },
-              ].map((review, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col gap-3 rounded-2xl border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-3 sm:p-4"
-                >
-                  <div>
-                    <p className="text-xs font-bold text-[var(--on-surface)] sm:text-sm">{review.name}</p>
-                    <p className="text-[10px] text-amber-400 sm:text-xs">★★★★★</p>
-                    <p className="text-[10px] text-[var(--on-surface-variant)] sm:text-xs">{review.date}</p>
-                    <p className="mt-1 text-xs leading-snug text-[var(--primary)] sm:text-sm">{review.text}</p>
-                  </div>
-                  {/* Placeholder image */}
-                  <div className="aspect-[3/4] w-full overflow-hidden rounded-xl bg-[var(--surface-container-high)]">
-                    <div className="flex h-full w-full items-center justify-center text-[var(--on-surface-variant)] opacity-30">
-                      <span className="material-symbols-outlined text-4xl">image</span>
+                { name: "Olivia F.",        date: "1/30/2026", text: "My wife loved her anniversary gift. Would recommend." }
+                            ].map((review, i) => {
+                              const imageFile = TESTIMONIALS_IMAGE_ORDER[i] ?? `test${i + 1}.jpeg`;
+                              const testimonialImage = `/testimonials/${imageFile}`;
+
+                return (
+                  <div
+                                  key={`${review.name}-${imageFile}`}
+                    className="flex flex-col gap-3 rounded-2xl border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-3 sm:p-4"
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-[var(--on-surface)] sm:text-sm">{review.name}</p>
+                      <p className="text-[10px] text-amber-400 sm:text-xs">★★★★★</p>
+                      <p className="text-[10px] text-[var(--on-surface-variant)] sm:text-xs">{review.date}</p>
+                      <p className="mt-1 text-xs leading-snug text-[var(--primary)] sm:text-sm">{review.text}</p>
+                    </div>
+
+                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-[var(--surface-container-high)]">
+                      <Image
+                        src={testimonialImage}
+                        alt={`Testimonial de ${review.name}`}
+                        unoptimized
+                        fill
+                        sizes="(min-width: 1024px) 22vw, 48vw"
+                        className="object-cover"
+                      />
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
 
-        <section id="styles" className="bg-[var(--surface-container-low)] px-6 py-20">
-          <div className="mx-auto max-w-[var(--container-max)]">
-            <div className="mb-14 text-center">
-              <h2 className="type-headline-md mb-3 text-[var(--on-surface)]">Styles that feel alive</h2>
-              <p className="type-body-md mx-auto max-w-2xl text-[var(--on-surface-variant)]">
-                Explore playful, premium portraits with expressive backgrounds and handcrafted details.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-              {[
-                { label: "Royal Icons", image: "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=800&auto=format&fit=crop&q=80" },
-                { label: "Beach Moods", image: "https://images.unsplash.com/photo-1552053831-71594a27632d?w=800&auto=format&fit=crop&q=80" },
-                { label: "Shark Riders", image: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=800&auto=format&fit=crop&q=80" },
-                { label: "Studio Chic", image: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&auto=format&fit=crop&q=80" },
-              ].map((card) => (
-                <a key={card.label} className="group flex flex-col gap-3" href="#">
-                  <div className="relative aspect-[3/4] overflow-hidden rounded-[var(--radius-xl)] border border-[var(--outline-variant)] bg-[var(--surface-container)] transition-transform duration-300 group-hover:scale-[1.02]">
-                    <Image
-                      src={card.image}
-                      alt={card.label}
-                      fill
-                      sizes="(min-width: 1024px) 24vw, (min-width: 768px) 50vw, 100vw"
-                      className="object-cover"
-                    />
-                  </div>
-                  <h3 className="type-headline-sm text-center text-[var(--on-surface)]">{card.label}</h3>
-                </a>
-              ))}
-            </div>
-          </div>
-        </section>
       </main>
 
-      <footer className="mt-auto border-t border-[var(--outline-variant)] bg-[var(--surface-container)]">
+
+
+      <section id="faq">
+        <FaqAccordion />
+      </section>
+
+      
+
+            <footer className="mt-auto border-t border-[var(--outline-variant)] bg-[var(--surface-container)]">
         <div className="mx-auto flex w-full max-w-[var(--container-max)] flex-col gap-2 px-6 py-16">
           <div className="mb-8 flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
-            <div className="font-[var(--font-playfair)] text-2xl font-bold text-[var(--on-surface)]">Vibrant Paws</div>
+            <div className="font-[var(--font-playfair)] text-2xl font-bold text-[var(--on-surface)]">Crowned Portraits</div>
             <nav className="flex flex-wrap gap-6 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--on-surface)]">
               <a className="transition-all hover:text-[var(--primary)]" href="#">About</a>
               <a className="transition-all hover:text-[var(--primary)]" href="#">FAQ</a>
@@ -364,7 +361,7 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col items-center justify-between gap-4 border-t border-[var(--outline-variant)] pt-8 text-sm text-[var(--on-surface-variant)] md:flex-row">
-            <p>© 2026 Vibrant Paws. All rights reserved.</p>
+            <p>© 2026 Crowned Portraits. All rights reserved.</p>
             <div className="flex gap-4">
               <span className="material-symbols-outlined cursor-pointer transition-colors hover:text-[var(--primary)]">credit_card</span>
               <span className="material-symbols-outlined cursor-pointer transition-colors hover:text-[var(--primary)]">account_balance_wallet</span>
@@ -372,10 +369,8 @@ export default function Home() {
           </div>
         </div>
       </footer>
-
-      <section id="faq">
-        <FaqAccordion />
-      </section>
     </>
+
+    
   );
 }

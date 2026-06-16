@@ -48,7 +48,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, status });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown order confirmation error.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const _message = error instanceof Error ? error.message : "Unknown order confirmation error.";
+    console.error("[orders/confirm]", _message);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }

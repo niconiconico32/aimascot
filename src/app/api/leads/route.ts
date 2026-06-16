@@ -38,7 +38,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown leads error.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const _message = error instanceof Error ? error.message : "Unknown leads error.";
+    console.error("[leads]", _message);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }

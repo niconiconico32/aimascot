@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
         line_items: [{ price: priceId, quantity: 1 }],
-        success_url: `${origin}/order-confirmed?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${origin}/preview`,
         billing_address_collection: "auto",
         phone_number_collection: { enabled: true },
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      success_url: `${origin}/order-confirmed?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}${cancelPath}`,
       customer_email: payload.email || undefined,
       billing_address_collection: "auto",
@@ -209,7 +209,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ sessionId: session.id, url: session.url });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown checkout error.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const _message = error instanceof Error ? error.message : "Unknown checkout error.";
+    console.error("[checkout]", _message);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }

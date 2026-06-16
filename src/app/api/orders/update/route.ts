@@ -24,13 +24,15 @@ type UpdateOrderPayload = {
 
 export async function POST(request: NextRequest) {
   try {
-    // ── Simple bearer-token guard (add INTERNAL_API_SECRET to .env.local) ──
+    // ── Bearer-token guard (set INTERNAL_API_SECRET in .env.local) ──────────
     const internalSecret = process.env.INTERNAL_API_SECRET;
-    if (internalSecret) {
-      const authHeader = request.headers.get("authorization") ?? "";
-      if (authHeader !== `Bearer ${internalSecret}`) {
-        return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-      }
+    if (!internalSecret) {
+      console.error("[orders/update] INTERNAL_API_SECRET not configured");
+      return NextResponse.json({ error: "Internal server configuration error." }, { status: 500 });
+    }
+    const authHeader = request.headers.get("authorization") ?? "";
+    if (authHeader !== `Bearer ${internalSecret}`) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
     const payload = (await request.json()) as UpdateOrderPayload;
@@ -61,7 +63,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown order update error.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const _message = error instanceof Error ? error.message : "Unknown order update error.";
+    console.error("[orders/update]", _message);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
