@@ -91,7 +91,7 @@ function CartPageContent() {
 
   const packageKey = searchParams.get("package") === "digital" ? "digital" : "canvas-digital";
   const size = searchParams.get("size") ?? "12 x 16";
-  const basePrice = Number(searchParams.get("price") ?? (packageKey === "digital" ? 49 : 79));
+  const basePrice = Number(searchParams.get("price") ?? (packageKey === "digital" ? 49 : 99));
   const packageDetails = PACKAGE_COPY[packageKey];
 
   const summary = useMemo(() => {

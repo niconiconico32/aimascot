@@ -63,11 +63,9 @@ export default function PreviewPage() {
   }, []);
 
   const handleAddToCart = (packageType: string, price: number, size?: string) => {
-    sessionStorage.setItem(
-      "cartSelection",
-      JSON.stringify({ packageType, price, size }),
-    );
-    router.push("/cart");
+    const params = new URLSearchParams({ package: packageType, price: String(price) });
+    if (size) params.set("size", size);
+    router.push(`/cart?${params.toString()}`);
   };
 
   const handleRegenerate = async (newStyleId?: Style) => {
