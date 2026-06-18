@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({
       imageData: previewUrlData.publicUrl,
-      cleanImageUrl: deliverablesFileName,
+      cleanImageUrl: generatedUrl,
       remainingAttempts: data[0].remaining_attempts,
     });
 
