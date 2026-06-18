@@ -19,7 +19,7 @@
   - `GELATO_CANVAS_UID_8X10=...` (el tamaño default en el cart)
   - `GELATO_CANVAS_UID_8X8=...` (si aplica)
 - [ ] En Stripe Dashboard, configurar webhook para apuntar a
-      `https://aimascot.vercel.app/api/webhooks/stripe`
+      `https://www.crownedportraits.com/api/webhooks/stripe`
 - [ ] Hacer una compra de prueba con `4242` (canvas + digital + mug opcional)
 - [ ] Verificar en Vercel Logs:
   - `[webhook] ▶ Creating Gelato order — uid: ...`
@@ -27,7 +27,7 @@
 - [ ] Revisar `dashboard.gelato.com` → Orders → ver si aparece la orden (draft o real)
 - [ ] Verificar que `gelato_order_id` y `mug_gelato_order_id` se guardaron en Supabase
 - [ ] Configurar webhook de Gelato en `dashboard.gelato.com` → Webhooks:
-      URL: `https://aimascot.vercel.app/api/webhooks/gelato`
+      URL: `https://www.crownedportraits.com/api/webhooks/gelato`
       Eventos: `order_status_updated`, `order_item_status_updated`
 - [ ] Ejecutar migración en Supabase Dashboard > SQL Editor:
       `supabase/migrations/00003_add_gelato_tracking.sql`
