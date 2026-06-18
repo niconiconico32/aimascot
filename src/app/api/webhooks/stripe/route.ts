@@ -510,20 +510,30 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // ── Mark as PROCESSING immediately ──────────────────────────────────────────
-  const { error: processingErr } = await supabase
-    .from("orders")
-    .update({
-      customer_email: customerEmail || null,
-      shipping_address: shippingAddress,
-      status: "PROCESSING",
-      ...(imageUrl ? { artwork_url: imageUrl } : {}),
-    })
-    .eq("stripe_session_id", session.id);
+  // ── Mark as PROCESSING immediately (upsert) ─────────────────────────────────
+  const { error: processingErr } = existing
+    ? await supabase
+        .from("orders")
+        .update({
+          customer_email: customerEmail || null,
+          shipping_address: shippingAddress,
+          status: "PROCESSING",
+          ...(imageUrl ? { artwork_url: imageUrl } : {}),
+        })
+        .eq("stripe_session_id", session.id)
+    : await supabase.from("orders").insert({
+        stripe_session_id: session.id,
+        customer_email: customerEmail || null,
+        shipping_address: shippingAddress,
+        status: "PROCESSING",
+        product_type: productType,
+        artwork_url: imageUrl || null,
+        size_selected: size || null,
+      });
 
   if (processingErr) {
     console.error(
-      "[webhook] PROCESSING status update failed:",
+      "[webhook] PROCESSING status update/insert failed:",
       processingErr.message,
     );
     // Return 200 so Stripe doesn't retry — proceed with fulfillment anyway

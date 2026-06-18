@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
 import { getStripeServerClient } from "@/lib/stripe";
+import { getSupabaseServerClient } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
 
@@ -102,6 +103,20 @@ export async function POST(request: NextRequest) {
         { error: "Stripe did not return a checkout URL." },
         { status: 500 },
       );
+    }
+
+    const supabase = getSupabaseServerClient();
+    const { error: insertErr } = await supabase.from("orders").insert({
+      stripe_session_id: session.id,
+      customer_email: email,
+      product_type: baseProduct,
+      artwork_url: generatedImageUrl,
+      size_selected: needsShipping ? null : null,
+      status: "pending_payment",
+    });
+
+    if (insertErr) {
+      console.error("[create-checkout-session] Order insert failed:", insertErr.message);
     }
 
     return NextResponse.json({ url: session.url });
