@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
           <tr>
             <td style="background:#ffffff;border-radius:18px;padding:40px 32px;box-shadow:0 4px 16px rgba(0,0,0,0.06);">
               <h1 style="margin:0 0 8px;font-size:28px;color:#1e3a8a;text-align:center;font-weight:800;">
-                Your ${productLabel} is on the way!
+                📦 Your ${productLabel} is on the way!
               </h1>
               <p style="margin:0 0 24px;font-size:15px;color:#5a5a5a;text-align:center;line-height:1.6;">
                 Great news — your order has been shipped.
@@ -103,12 +103,37 @@ export async function POST(request: NextRequest) {
               </div>
               ` : ""}
               ${trackingUrl ? `
-              <div style="text-align:center;">
+              <div style="text-align:center;margin-bottom:24px;">
                 <a href="${trackingUrl}" style="display:inline-block;background:#1e3a8a;color:#ffffff;font-size:16px;font-weight:700;padding:14px 36px;border-radius:40px;text-decoration:none;">
                   Track your package
                 </a>
               </div>
               ` : ""}
+
+              <hr style="border:none;border-top:1px solid #e8e0d4;margin:24px 0;" />
+
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom:12px;">
+                    <a href="https://www.crownedportraits.com/contact" style="display:inline-block;color:#1e3a8a;font-size:14px;font-weight:600;text-decoration:underline;margin:0 12px;">Contact Support</a>
+                  </td>
+                </tr>
+              </table>
+
+              <hr style="border:none;border-top:1px solid #e8e0d4;margin:24px 0;" />
+
+              <div style="background:#fef6e6;border-radius:12px;padding:20px 24px;text-align:center;border:1px solid #f0dbaa;">
+                <p style="margin:0 0 6px;font-size:16px;color:#6b4e00;font-weight:700;">
+                  🐾 Liked the result?
+                </p>
+                <p style="margin:0 0 16px;font-size:14px;color:#6b4e00;line-height:1.5;">
+                  Get <strong>50% off</strong> your next portrait with code
+                  <strong style="font-size:18px;letter-spacing:2px;">FAMILY50</strong>
+                </p>
+                <a href="https://www.crownedportraits.com/?promo=FAMILY50" style="display:inline-block;background:#1e3a8a;color:#ffffff;font-size:16px;font-weight:700;padding:14px 36px;border-radius:40px;text-decoration:none;">
+                  Make a new portrait →
+                </a>
+              </div>
             </td>
           </tr>
           <tr>
@@ -124,7 +149,7 @@ export async function POST(request: NextRequest) {
   </table>
 </body>
 </html>`,
-            text: `Your ${productLabel} has shipped!\n\nTracking: ${trackingCode ?? "N/A"}\n${trackingUrl ?? ""}\n\nCrowned Portraits — GGRetro LLC`,
+            text: `📦 Your ${productLabel} has shipped!\n\nTracking: ${trackingCode ?? "N/A"}\n${trackingUrl ?? ""}\n\nContact us: https://www.crownedportraits.com/contact\n\n---\n🐾 Liked the result? Get 50% off your next portrait with code FAMILY50\nhttps://www.crownedportraits.com/?promo=FAMILY50\n\nCrowned Portraits — GGRetro LLC`,
           });
         } catch (emailErr) {
           console.error("[gelato-webhook] Tracking email failed:", emailErr);
