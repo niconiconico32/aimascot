@@ -14,7 +14,6 @@ type CanvasSize = {
 };
 
 const CANVAS_SIZES: readonly CanvasSize[] = [
-  { label: "8 x 10", price: 79 },
   { label: "12 x 16", price: 99 },
   { label: "18 x 24", price: 119, badge: "Popular" },
   { label: "24 x 36", price: 159 },

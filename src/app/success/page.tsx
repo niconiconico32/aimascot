@@ -162,11 +162,10 @@ export default async function SuccessPage({
                 ✨
               </span>
               <div>
-                <p className="font-semibold">Enhancing your portrait to 4K</p>
+                <p className="font-semibold">Preparing your download</p>
                 <p className="mt-1 text-sm text-[var(--on-surface-variant)]">
-                  We&apos;re applying AI upscaling to boost your portrait to
-                  stunning 4K resolution. You&apos;ll receive the download link
-                  at{" "}
+                  We&apos;re getting your portrait ready. You&apos;ll receive
+                  the download link at{" "}
                   <span className="font-semibold text-[var(--primary)]">
                     {customerEmail}
                   </span>{" "}
@@ -182,7 +181,7 @@ export default async function SuccessPage({
               <div>
                 <p className="font-semibold">Your mug is being printed</p>
                 <p className="mt-1 text-sm text-[var(--on-surface-variant)]">
-                  Your 4K portrait has been sent to our printing workshop.
+                  Your portrait has been sent to our printing workshop.
                   You&apos;ll receive a tracking number at{" "}
                   <span className="font-semibold text-[var(--primary)]">
                     {customerEmail}
@@ -199,7 +198,7 @@ export default async function SuccessPage({
               <div>
                 <p className="font-semibold">Your canvas is being prepared</p>
                 <p className="mt-1 text-sm text-[var(--on-surface-variant)]">
-                  The 4K portrait has been sent to our printing workshop.
+                  Your portrait has been sent to our printing workshop.
                   You&apos;ll receive a tracking number at{" "}
                   <span className="font-semibold text-[var(--primary)]">
                     {customerEmail}

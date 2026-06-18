@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { fal } from "@fal-ai/client";
 import { Resend } from "resend";
 
 import { getStripeServerClient } from "@/lib/stripe";
@@ -34,11 +33,6 @@ type SessionComplete = Stripe.Checkout.Session & {
   shipping_details?: ShippingDetails | null;
 };
 
-type AuraSrOutput = {
-  image?: { url: string };
-  images?: { url: string }[];
-};
-
 type FulfillmentData = {
   sessionId: string;
   customerEmail: string;
@@ -51,54 +45,11 @@ type FulfillmentData = {
   shippingName: string | null | undefined;
 };
 
-// ─── 4K Upscaling (fal.ai) ────────────────────────────────────────────────────
-
-async function upscaleImageTo4K(imageUrl: string): Promise<string> {
-  if (!imageUrl.startsWith("https://")) {
-    console.warn("[webhook] upscale skipped — URL is not HTTPS");
-    return imageUrl;
-  }
-
-  console.log("[webhook] ▶ fal-ai/aura-sr upscaling:", imageUrl);
-
-  const result = await fal.subscribe("fal-ai/aura-sr", {
-    input: {
-      image_url: imageUrl,
-      upscale_factor: 4,
-      overlapping_tiles: true,
-    },
-  });
-
-  const output = result.data as AuraSrOutput;
-  const upscaledUrl = output?.image?.url ?? output?.images?.[0]?.url;
-
-  if (!upscaledUrl) {
-    throw new Error("fal-ai/aura-sr returned no image URL");
-  }
-
-  console.log("[webhook] ✓ Upscale done:", upscaledUrl);
-  return upscaledUrl;
-}
-
 // ─── Fulfillment Orchestration ─────────────────────────────────────────────────
 
 async function processOrderFulfillment(data: FulfillmentData): Promise<void> {
   const supabase = getSupabaseServerClient();
-  let hdImageUrl = data.imageUrl;
-
-  // ── Step 1: 4K Upscaling via fal.ai ─────────────────────────────────────────
-  // TO-DO: Monitor fal.ai credits and queue limits. Add retry logic for
-  //         transient failures (rate limits, 5xx). Consider a DLQ for
-  //         persistent failures so no order is left un-upscaled.
-  try {
-    if (data.imageUrl.startsWith("https://")) {
-      hdImageUrl = await upscaleImageTo4K(data.imageUrl);
-    }
-  } catch (upscaleErr) {
-    console.error("[webhook] Upscale failed — continuing with original:", upscaleErr);
-  }
-
-  const finalImageUrl = hdImageUrl || data.imageUrl;
+  const finalImageUrl = data.imageUrl;
 
   // ── Step 2: Send download email via Resend (all orders) ─────────────────────
   try {
@@ -122,11 +73,10 @@ async function processOrderFulfillment(data: FulfillmentData): Promise<void> {
           <tr>
             <td style="background:#ffffff;border-radius:18px;padding:40px 32px;box-shadow:0 4px 16px rgba(0,0,0,0.06);">
               <h1 style="margin:0 0 8px;font-size:28px;color:#1e3a8a;text-align:center;font-weight:800;">
-                Your 4K portrait is ready!
+                Your portrait is ready!
               </h1>
               <p style="margin:0 0 24px;font-size:15px;color:#5a5a5a;text-align:center;line-height:1.6;">
-                Thank you for your order. Your portrait has been enhanced to
-                stunning 4K resolution. Click the link below to download it.
+                Thank you for your order. Click the link below to download your portrait.
               </p>
 
               <div style="text-align:center;margin-bottom:28px;">
@@ -176,9 +126,9 @@ async function processOrderFulfillment(data: FulfillmentData): Promise<void> {
 </body>
 </html>`;
 
-      const emailText = `Your 4K portrait is ready!
+      const emailText = `Your portrait is ready!
 
-Thank you for your order. Your portrait has been enhanced to stunning 4K resolution.
+Thank you for your order.
 
 Download your portrait here:
 ${finalImageUrl || "(link coming soon)"}
@@ -196,7 +146,7 @@ Crowned Portraits — GGRetro LLC`;
         from: "Crowned Portraits <hello@crownedportraits.com>",
         replyTo: "hello@crownedportraits.com",
         to: [data.customerEmail],
-        subject: "🎨 Your 4K portrait is ready to download!",
+        subject: "🎨 Your portrait is ready to download!",
         html: emailHtml,
         text: emailText,
         tags: [
@@ -353,15 +303,9 @@ Crowned Portraits — GGRetro LLC`;
   //         analytics and SLA monitoring. Also consider writing to a
   //         `fulfillment_log` table for a complete audit trail.
   try {
-    const updates: Record<string, string> = { status: "COMPLETED" };
-    if (hdImageUrl && hdImageUrl !== data.imageUrl) {
-      updates.upscaled_url = hdImageUrl;
-      updates.artwork_url = hdImageUrl;
-    }
-
     const { error: completeErr } = await supabase
       .from("orders")
-      .update(updates)
+      .update({ status: "COMPLETED" })
       .eq("stripe_session_id", data.sessionId);
 
     if (completeErr) {

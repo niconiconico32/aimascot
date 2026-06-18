@@ -90,7 +90,7 @@ function CartPageContent() {
   } | null>(null);
 
   const packageKey = searchParams.get("package") === "digital" ? "digital" : "canvas-digital";
-  const size = searchParams.get("size") ?? "8 x 10";
+  const size = searchParams.get("size") ?? "12 x 16";
   const basePrice = Number(searchParams.get("price") ?? (packageKey === "digital" ? 49 : 79));
   const packageDetails = PACKAGE_COPY[packageKey];
 

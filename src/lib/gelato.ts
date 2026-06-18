@@ -21,14 +21,9 @@ const GELATO_BASE_URL = "https://order.gelatoapis.com";
  * from your catalog before going live.
  */
 const CANVAS_PRODUCT_UIDS: Record<string, string> = {
-  "8 x 8": process.env.GELATO_CANVAS_UID_8X8 ?? "REPLACE_WITH_GELATO_UID_8X8",
-  "8 x 10": process.env.GELATO_CANVAS_UID_8X10 ?? "REPLACE_WITH_GELATO_UID_8X10",
   "12 x 16": process.env.GELATO_CANVAS_UID_12X16 ?? "REPLACE_WITH_GELATO_UID_12X16",
   "18 x 24": process.env.GELATO_CANVAS_UID_18X24 ?? "REPLACE_WITH_GELATO_UID_18X24",
   "24 x 36": process.env.GELATO_CANVAS_UID_24X36 ?? "REPLACE_WITH_GELATO_UID_24X36",
-  "11 x 14": process.env.GELATO_CANVAS_UID_11X14 ?? "REPLACE_WITH_GELATO_UID_11X14",
-  "16 x 20": process.env.GELATO_CANVAS_UID_16X20 ?? "REPLACE_WITH_GELATO_UID_16X20",
-  "20 x 24": process.env.GELATO_CANVAS_UID_20X24 ?? "REPLACE_WITH_GELATO_UID_20X24",
 };
 
 /** Returns the Gelato productUid for a given size string, falling back to 8×10. */
@@ -38,7 +33,7 @@ export function getCanvasProductUid(size: string): string {
     (candidate) => candidate.replace(/\s+/g, "").toLowerCase() === normalizedSize,
   );
 
-  return CANVAS_PRODUCT_UIDS[matchedSize ?? size] ?? CANVAS_PRODUCT_UIDS["8 x 10"] ?? "REPLACE_WITH_GELATO_UID_8X10";
+  return CANVAS_PRODUCT_UIDS[matchedSize ?? size] ?? CANVAS_PRODUCT_UIDS["12 x 16"] ?? "REPLACE_WITH_GELATO_UID_12X16";
 }
 
 /** Returns the Gelato productUid for the mug, reading MUG_PRODUCT_UID from env. */
