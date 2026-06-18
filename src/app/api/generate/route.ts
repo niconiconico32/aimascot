@@ -1,3 +1,5 @@
+import { existsSync } from "fs";
+import { join } from "path";
 import { fal } from "@fal-ai/client";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
@@ -18,9 +20,8 @@ async function applyWatermark(url: string): Promise<Buffer> {
 
   const { width: w = 1200, height: h = 1600 } = await sharp(baseBuffer).metadata();
 
-  const overlayPath = require("path").join(process.cwd(), "public", "overlay.png");
-  const fs = require("fs") as typeof import("fs");
-  if (!fs.existsSync(overlayPath)) {
+  const overlayPath = join(process.cwd(), "public", "overlay.png");
+  if (!existsSync(overlayPath)) {
     throw new Error("overlay.png not found in public/");
   }
 
