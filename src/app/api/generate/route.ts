@@ -18,22 +18,15 @@ async function applyWatermark(url: string): Promise<Buffer> {
 
   const { width: w = 1200, height: h = 1600 } = await sharp(baseBuffer).metadata();
 
-  const label    = "CROWNED PORTRAITS PREVIEW";
-  const fontPt   = Math.max(40, Math.round(w / 9));
-  const pangoSize = fontPt * 1024;
+  const overlayPath = require("path").join(process.cwd(), "public", "overlay.png");
+  const fs = require("fs") as typeof import("fs");
+  if (!fs.existsSync(overlayPath)) {
+    throw new Error("overlay.png not found in public/");
+  }
 
-  const rawTile = await sharp({
-    text: {
-      text: `<span size="${pangoSize}" foreground="white" alpha="12000" font_weight="bold">${label}</span>`,
-      font: "sans-serif",
-      dpi: 72,
-      rgba: true,
-    },
-  })
-    .png()
-    .toBuffer();
+  const tile = await sharp(overlayPath).png().toBuffer();
 
-  let rotatedTile = await sharp(rawTile)
+  let rotatedTile = await sharp(tile)
     .rotate(-30, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
     .toBuffer();
