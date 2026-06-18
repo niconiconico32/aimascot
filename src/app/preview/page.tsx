@@ -9,14 +9,15 @@ import { STYLES_BY_SUBJECT, type Style, type Subject } from "@/data/styles";
 
 type CanvasSize = {
   label: string;
+  cmLabel: string;
   price: number;
   badge?: string;
 };
 
 const CANVAS_SIZES: readonly CanvasSize[] = [
-  { label: "12 x 16", price: 99 },
-  { label: "18 x 24", price: 119, badge: "Popular" },
-  { label: "24 x 36", price: 159 },
+  { label: "12 x 16", cmLabel: "30 x 40", price: 99 },
+  { label: "18 x 24", cmLabel: "45 x 60", price: 119, badge: "Popular" },
+  { label: "24 x 36", cmLabel: "60 x 90", price: 139 },
 ] as const;
 
 const TESTIMONIALS_IMAGE_ORDER = [
@@ -38,6 +39,7 @@ export default function PreviewPage() {
   const router = useRouter();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedCanvasSize, setSelectedCanvasSize] = useState<CanvasSize>(CANVAS_SIZES[0]);
+  const [showCm, setShowCm] = useState(false);
   const [generationParams, setGenerationParams] = useState<{
     originalFileName: string;
     subjectId: Subject;
@@ -266,8 +268,26 @@ export default function PreviewPage() {
                   <div className="mb-3 flex items-center justify-between text-sm font-semibold text-[var(--on-surface)]">
                     <span>Choose size:</span>
                     <div className="flex items-center gap-1 rounded-full bg-[var(--surface-container)] p-0.5 text-xs">
-                      <span className="rounded-full bg-[var(--primary)] px-2.5 py-1 font-bold text-[var(--on-primary)]">in</span>
-                      <span className="cursor-pointer px-2.5 py-1 font-medium text-[var(--on-surface-variant)]">cm</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowCm(false)}
+                        className={[
+                          "rounded-full px-2.5 py-1 font-bold transition",
+                          !showCm
+                            ? "bg-[var(--primary)] text-[var(--on-primary)]"
+                            : "font-medium text-[var(--on-surface-variant)]",
+                        ].join(" ")}
+                      >in</button>
+                      <button
+                        type="button"
+                        onClick={() => setShowCm(true)}
+                        className={[
+                          "rounded-full px-2.5 py-1 font-bold transition",
+                          showCm
+                            ? "bg-[var(--primary)] text-[var(--on-primary)]"
+                            : "font-medium text-[var(--on-surface-variant)]",
+                        ].join(" ")}
+                      >cm</button>
                     </div>
                   </div>
 
@@ -293,7 +313,7 @@ export default function PreviewPage() {
                             </span>
                           ) : null}
                           <p className={size.badge ? "mt-1 font-bold text-[var(--on-surface)]" : "font-bold text-[var(--on-surface)]"}>
-                            {size.label}
+                            {showCm ? size.cmLabel : size.label}{showCm ? " cm" : `"`}
                           </p>
                           <p className="font-medium text-[var(--on-surface-variant)]">${size.price}</p>
                         </button>
