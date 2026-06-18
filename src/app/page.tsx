@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import FaqAccordion from "./components/faq-accordion";
 import PortraitWizard from "./components/portrait-wizard";
 
@@ -29,6 +29,15 @@ const TESTIMONIALS_IMAGE_ORDER = [
 
 export default function Home() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const promo = params.get("promo");
+    if (promo) {
+      sessionStorage.setItem("promoCode", promo);
+    }
+  }, []);
 
   return (
     <>

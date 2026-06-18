@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 type CartFieldName = "email" | "notes";
@@ -76,6 +76,18 @@ function CartPageContent() {
     if (typeof window === "undefined") return null;
     return sessionStorage.getItem("generatedPortraitUrl") ?? sessionStorage.getItem("portraitPreview");
   });
+  const [promoCode, setPromoCode] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return searchParams.get("promo") ?? sessionStorage.getItem("promoCode") ?? "";
+  });
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [appliedPromotion, setAppliedPromotion] = useState<{
+    promotionCodeId: string;
+    percentOff: number | null;
+    amountOff: number | null;
+    name: string | null;
+  } | null>(null);
 
   const packageKey = searchParams.get("package") === "digital" ? "digital" : "canvas-digital";
   const size = searchParams.get("size") ?? "8 x 10";
@@ -89,10 +101,20 @@ function CartPageContent() {
     const giftWrapFee = giftWrap ? 9 : 0;
     const shippingFee = packageKey === "digital" ? 0 : 7;
     const subtotal = basePrice + giftWrapFee + upsellTotal;
-    const total = subtotal + shippingFee;
 
-    return { giftWrapFee, shippingFee, subtotal, total, upsellTotal };
-  }, [basePrice, giftWrap, packageKey, selectedUpsells]);
+    let discountAmount = 0;
+    if (appliedPromotion) {
+      if (appliedPromotion.percentOff) {
+        discountAmount = Math.round(subtotal * appliedPromotion.percentOff / 100);
+      } else if (appliedPromotion.amountOff) {
+        discountAmount = Math.round(appliedPromotion.amountOff / 100);
+      }
+    }
+
+    const total = subtotal + shippingFee - discountAmount;
+
+    return { giftWrapFee, shippingFee, subtotal, total, upsellTotal, discountAmount };
+  }, [basePrice, giftWrap, packageKey, selectedUpsells, appliedPromotion]);
 
   const validateSingleField = (field: CartFieldName, value: string) => {
     const error = validateCartField(field, value);
@@ -158,6 +180,7 @@ function CartPageContent() {
           email,
           cancelPath: `${window.location.pathname}${window.location.search}`,
           upsells,
+          ...(appliedPromotion ? { promotionCodeId: appliedPromotion.promotionCodeId } : {}),
         }),
       });
 
@@ -173,6 +196,58 @@ function CartPageContent() {
       setIsCheckingOut(false);
     }
   };
+
+  const validateAndApplyPromo = async (code: string) => {
+    const trimmed = code.trim().toUpperCase();
+    if (!trimmed) {
+      setPromoError("Please enter a promo code.");
+      return;
+    }
+
+    setIsValidatingPromo(true);
+    setPromoError(null);
+
+    try {
+      const res = await fetch("/api/validate-promo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: trimmed }),
+      });
+
+      const data = await res.json();
+
+      if (!data.valid) {
+        setPromoError(data.error ?? "Invalid promo code.");
+        setAppliedPromotion(null);
+        return;
+      }
+
+      setAppliedPromotion({
+        promotionCodeId: data.promotionCodeId,
+        percentOff: data.coupon.percentOff ?? null,
+        amountOff: data.coupon.amountOff ?? null,
+        name: data.coupon.name ?? null,
+      });
+    } catch {
+      setPromoError("Could not validate promo code. Please try again.");
+    } finally {
+      setIsValidatingPromo(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromotion(null);
+    setPromoCode("");
+    setPromoError(null);
+  };
+
+  useEffect(() => {
+    const promo = searchParams.get("promo") ?? sessionStorage.getItem("promoCode");
+    if (promo && promo.trim() && !appliedPromotion) {
+      validateAndApplyPromo(promo);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isFormValid = useMemo(() => {
     return (
@@ -340,6 +415,65 @@ function CartPageContent() {
                 })}
               </div>
 
+              {/* Promo code */}
+              <div className="mt-4 border-t border-[var(--outline-variant)] pt-4">
+                {appliedPromotion ? (
+                  <div className="flex items-center justify-between rounded-[var(--radius-md)] border border-[var(--tertiary)]/30 bg-[var(--tertiary-container)]/20 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-[var(--on-surface)]">
+                        {appliedPromotion.name ?? promoCode}
+                      </span>
+                      {appliedPromotion.percentOff && (
+                        <span className="text-xs font-bold text-[var(--tertiary)]">
+                          {appliedPromotion.percentOff}% off
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemovePromo}
+                      className="text-sm text-[var(--on-surface-variant)] hover:text-[var(--error)]"
+                      aria-label="Remove promo code"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--outline-variant)] bg-white px-3 py-2">
+                      <input
+                        type="text"
+                        value={promoCode}
+                        onChange={(e) => {
+                          setPromoCode(e.target.value.toUpperCase());
+                          if (promoError) setPromoError(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            validateAndApplyPromo(promoCode);
+                          }
+                        }}
+                        placeholder="Promo code"
+                        className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+                        disabled={isValidatingPromo}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => validateAndApplyPromo(promoCode)}
+                        disabled={isValidatingPromo || !promoCode.trim()}
+                        className="shrink-0 rounded-[var(--radius-sm)] bg-[var(--primary)] px-3 py-1.5 text-xs font-bold text-[var(--on-primary)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isValidatingPromo ? "..." : "Apply"}
+                      </button>
+                    </label>
+                    {promoError && (
+                      <p className="text-xs text-[var(--error)]">{promoError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Totals */}
               <div className="mt-4 space-y-2 border-t border-[var(--outline-variant)] pt-4 text-sm">
                 {summary.upsellTotal > 0 && (
@@ -352,6 +486,12 @@ function CartPageContent() {
                   <span>Shipping</span>
                   <span>{summary.shippingFee === 0 ? "Free" : `$${summary.shippingFee}`}</span>
                 </div>
+                {summary.discountAmount > 0 && (
+                  <div className="flex justify-between text-sm text-[var(--tertiary)]">
+                    <span>Discount</span>
+                    <span>-${summary.discountAmount}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-base font-extrabold text-[var(--on-surface)]">
                   <span>Total</span>
                   <span className="text-[var(--primary)]">${summary.total}</span>

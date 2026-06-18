@@ -35,6 +35,7 @@ type CheckoutPayload = {
   email: string;
   cancelPath: string;
   upsells: CheckoutUpsell[];
+  promotionCodeId?: string; // Stripe promotion_code ID from validated promo code
 };
 
 function toCents(amount: number) {
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
             allowed_countries: ["US", "CA", "GB", "IE", "ES", "FR", "DE", "IT", "AU", "NZ"],
           },
         }),
-        metadata: {
+      metadata: {
           productType,
           size,
           generatedImageUrl, // stored in Stripe — webhook uses this to trigger Gelato / upscale
@@ -179,6 +180,9 @@ export async function POST(request: NextRequest) {
               allowed_countries: ["US", "CA", "MX", "ES", "GB", "FR", "DE", "IT", "AU", "NZ"],
             },
       line_items: lineItems,
+      ...(payload.promotionCodeId
+        ? { discounts: [{ promotion_code: payload.promotionCodeId }] }
+        : {}),
       metadata: {
         packageKey: payload.packageKey,
         packageTitle: payload.packageTitle,

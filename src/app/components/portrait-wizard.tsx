@@ -24,7 +24,7 @@ const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 // ─── TEST MODE ──────────────────────────────────────────────────────────────
 // Set to `true` to bypass the AI API and use the uploaded photo directly.
 // See ENABLE-API.md in the project root for instructions to re-enable.
-const TEST_MODE = true;
+const TEST_MODE = false;
 // ────────────────────────────────────────────────────────────────────────────
 
 const STATUS_MESSAGES = [
