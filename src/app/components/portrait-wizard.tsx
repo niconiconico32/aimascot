@@ -202,9 +202,12 @@ export default function PortraitWizard() {
           body: JSON.stringify(payload),
         });
       })
-      .then((res) => {
+      .then(async (res) => {
         if (!res) return; // upload failed, already handled above
-        if (!res.ok) throw new Error("API error");
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({})) as { error?: string };
+          throw new Error(body.error ?? `Server error (${res.status})`);
+        }
         return res.json() as Promise<{ imageData: string; cleanImageUrl?: string }>;
       })
       .then((data) => {
@@ -231,8 +234,9 @@ export default function PortraitWizard() {
           );
         apiDoneRef.current = true;
       })
-      .catch(() => {
-        setErrorMessage("Portrait generation failed. Please try again.");
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Portrait generation failed";
+        setErrorMessage(msg);
         setIsLoading(false);
       });
   };
@@ -475,7 +479,7 @@ export default function PortraitWizard() {
           <div className="mb-4 flex items-center gap-3">
             <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={previewUrl} alt="Your photo" className="h-full w-full object-cover" />
+              <img key={previewUrl} src={previewUrl} alt="Your photo" className="h-full w-full object-cover" />
               <button
                 onClick={() => { setSelectedFile(null); setPreviewUrl(null); }}
                 className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white text-[10px] transition hover:bg-black/80"

@@ -38,6 +38,8 @@ async function applyWatermark(url: string): Promise<Buffer> {
 
 // ─── Route handler ───────────────────────────────────────────────────────────
 
+export const maxDuration = 120;
+
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();
