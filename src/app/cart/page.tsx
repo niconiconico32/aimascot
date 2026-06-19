@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 type CartFieldName = "email";
@@ -81,11 +81,9 @@ function CartPageContent() {
     return sessionStorage.getItem("leadEmail") ?? localStorage.getItem("leadEmail") ?? "";
   });
   const [shippingCountry, setShippingCountry] = useState("");
-  const [shippingPostcode, setShippingPostcode] = useState("");
   const [deliveryDays, setDeliveryDays] = useState<[number, number] | null>(null);
   const [isValidatingCountry, setIsValidatingCountry] = useState(false);
   const [shippingError, setShippingError] = useState<string | null>(null);
-  const shippingDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [giftWrap, setGiftWrap] = useState(false);
   const [smsUpdates, setSmsUpdates] = useState(true);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -116,8 +114,8 @@ function CartPageContent() {
   const basePrice = Number(searchParams.get("price") ?? (packageKey === "digital" ? 49 : 99));
   const packageDetails = PACKAGE_COPY[packageKey];
 
-  const validateDestination = useCallback(async (country: string, postcode: string) => {
-    if (!country || !postcode || postcode.length < 3) return;
+  const validateDestination = useCallback(async (country: string) => {
+    if (!country) return;
 
     setIsValidatingCountry(true);
     setShippingError(null);
@@ -126,7 +124,7 @@ function CartPageContent() {
       const res = await fetch("/api/shipping-quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ country, postcode }),
+        body: JSON.stringify({ country }),
       });
 
       const data = await res.json();
@@ -148,19 +146,8 @@ function CartPageContent() {
 
   useEffect(() => {
     if (packageKey === "digital") return;
-
-    if (shippingDebounce.current) clearTimeout(shippingDebounce.current);
-
-    if (shippingCountry && shippingPostcode.length >= 3) {
-      shippingDebounce.current = setTimeout(() => {
-        validateDestination(shippingCountry, shippingPostcode);
-      }, 600);
-    }
-
-    return () => {
-      if (shippingDebounce.current) clearTimeout(shippingDebounce.current);
-    };
-  }, [shippingCountry, shippingPostcode, packageKey, validateDestination]);
+    validateDestination(shippingCountry);
+  }, [shippingCountry, packageKey, validateDestination]);
 
   const summary = useMemo(() => {
     const upsellTotal = UPSELL_PRODUCTS.reduce((sum, product) => {
@@ -373,33 +360,19 @@ function CartPageContent() {
             {/* Shipping destination */}
             {packageKey !== "digital" ? (
               <div className="space-y-4">
-                <div className="flex gap-3">
-                  <label className="block flex-1">
-                    <span className="mb-1.5 block text-sm font-semibold text-[var(--on-surface)]">Country</span>
-                    <select
-                      value={shippingCountry}
-                      onChange={(e) => { setShippingCountry(e.target.value); setDeliveryDays(null); }}
-                      className="w-full rounded-[var(--radius-default)] border border-[var(--outline-variant)] bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(32,60,185,0.12)]"
-                    >
-                      <option value="">Select country</option>
-                      {COUNTRIES.map((c) => (
-                        <option key={c.code} value={c.code}>{c.name}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="block flex-1">
-                    <span className="mb-1.5 block text-sm font-semibold text-[var(--on-surface)]">Postal code</span>
-                    <input
-                      type="text"
-                      value={shippingPostcode}
-                      onChange={(e) => { setShippingPostcode(e.target.value); setDeliveryDays(null); }}
-                      placeholder="e.g. 10001"
-                      autoComplete="postal-code"
-                      maxLength={20}
-                      className="w-full rounded-[var(--radius-default)] border border-[var(--outline-variant)] bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(32,60,185,0.12)]"
-                    />
-                  </label>
-                </div>
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-semibold text-[var(--on-surface)]">Country</span>
+                  <select
+                    value={shippingCountry}
+                    onChange={(e) => { setShippingCountry(e.target.value); setDeliveryDays(null); }}
+                    className="w-full rounded-[var(--radius-default)] border border-[var(--outline-variant)] bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(32,60,185,0.12)]"
+                  >
+                    <option value="">Select country</option>
+                    {COUNTRIES.map((c) => (
+                      <option key={c.code} value={c.code}>{c.name}</option>
+                    ))}
+                  </select>
+                </label>
 
                 {isValidatingCountry && (
                   <div className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-4 py-3">

@@ -27,12 +27,12 @@ const RATES: Record<string, RateEntry> = {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as { country: string; postcode: string };
+    const body = (await request.json()) as { country: string };
 
     const country = body.country?.toUpperCase();
-    if (!country || !body.postcode) {
+    if (!country) {
       return NextResponse.json(
-        { error: "Missing required fields: country, postcode." },
+        { error: "Missing required field: country." },
         { status: 400 },
       );
     }
