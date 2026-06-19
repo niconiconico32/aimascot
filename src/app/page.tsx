@@ -268,15 +268,15 @@ export default function Home() {
                 <span className="material-symbols-outlined fill">star</span>
                 <span className="material-symbols-outlined fill">star</span>
               </div>
-              <div className="text-3xl font-extrabold text-[var(--on-surface)]">12,258</div>
+              <div className="text-3xl font-extrabold text-[var(--on-surface)]">2,258</div>
               <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">verified reviews</div>
             </div>
             <div className="flex flex-col items-center justify-center gap-2 pt-4 md:pt-0">
-              <div className="text-3xl font-extrabold text-[var(--on-surface)]">1.2M+</div>
+              <div className="text-3xl font-extrabold text-[var(--on-surface)]">5,000+</div>
               <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">portraits generated</div>
             </div>
             <div className="flex flex-col items-center justify-center gap-2 pt-4 md:pt-0">
-              <div className="text-3xl font-extrabold text-[var(--on-surface)]">50+</div>
+              <div className="text-3xl font-extrabold text-[var(--on-surface)]">20+</div>
               <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--on-surface-variant)]">countries served</div>
             </div>
           </div>
@@ -294,7 +294,7 @@ export default function Home() {
               </h2>
               <div className="mt-3 flex items-center justify-center gap-2 text-sm font-semibold text-[var(--on-surface-variant)]">
                 <span className="text-amber-400">★★★★★</span>
-                <span>12,258 Reviews</span>
+                <span>2,258 Reviews</span>
               </div>
             </div>
 
@@ -362,7 +362,7 @@ export default function Home() {
             <div className="font-[var(--font-playfair)] text-2xl font-bold text-[var(--on-surface)]">Crowned Portraits</div>
             <nav className="flex flex-wrap gap-6 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--on-surface)]">
               <a className="transition-all hover:text-[var(--primary)]" href="#">About</a>
-              <a className="transition-all hover:text-[var(--primary)]" href="/#faq">FAQ</a>
+              <a className="transition-all hover:text-[var(--primary)]" href="#">FAQ</a>
               <a className="transition-all hover:text-[var(--primary)]" href="/contact">Contact</a>
               <a className="transition-all hover:text-[var(--primary)]" href="/privacy">Privacy</a>
               <a className="transition-all hover:text-[var(--primary)]" href="/terms">Terms</a>

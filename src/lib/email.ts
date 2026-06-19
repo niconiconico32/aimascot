@@ -248,7 +248,7 @@ export async function sendOrderConfirmation(data: OrderConfirmationData): Promis
 
   const { error } = await resend.emails.send({
     from: "Crowned Portraits <hello@crownedportraits.com>",
-    replyTo: "hello@crownedportraits.com",
+    replyTo: "contact-liada@gmail.com",
     to: [data.customerEmail],
     subject: isPhysical
       ? "🎉 Your portrait is being created!"
@@ -323,7 +323,7 @@ export async function sendTrackingNotification(data: TrackingNotificationData): 
 
   const { error } = await resend.emails.send({
     from: "Crowned Portraits <hello@crownedportraits.com>",
-    replyTo: "hello@crownedportraits.com",
+    replyTo: "contact-liada@gmail.com",
     to: [data.customerEmail],
     subject: `📦 Your ${data.productLabel} order has shipped!`,
     html: wrapper(htmlBody),
