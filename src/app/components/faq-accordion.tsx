@@ -36,7 +36,7 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: "Can I include multiple pets in one portrait?",
     answer:
-      "Currently each portrait features one pet. Want a royal duo? Create separate portraits and use code FAMILY50 at checkout to get 40% off your second one.",
+      "Currently each portrait features one pet. Want a royal duo? Create separate portraits and use code PROCUSTOMER40OFF at checkout to get 40% off your second one.",
   },
   {
     question: "How will the final portrait look?",

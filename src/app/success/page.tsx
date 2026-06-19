@@ -262,12 +262,12 @@ export default async function SuccessPage({
                 Create another portrait now with{" "}
                 <strong>40% off</strong> using the code:{" "}
                 <span className="inline-block rounded bg-[var(--tertiary-container)] px-3 py-1 font-mono text-sm font-bold tracking-wider text-[var(--on-tertiary-container)]">
-                  FAMILY50
+                  PROCUSTOMER40OFF
                 </span>
               </p>
             </div>
             <Link
-              href="/?promo=FAMILY50"
+              href="/?promo=PROCUSTOMER40OFF"
               className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[var(--primary)] px-6 py-3 text-sm font-bold text-[var(--on-primary)] transition hover:brightness-110"
             >
               Create another portrait

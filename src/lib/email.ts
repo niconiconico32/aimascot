@@ -140,9 +140,9 @@ function upsellBanner(): string {
     </p>
     <p style="margin:0 0 16px;font-size:14px;color:#6b4e00;line-height:1.5;">
       Get <strong>40% off</strong> your next portrait with code
-      <strong style="font-size:18px;letter-spacing:2px;">FAMILY50</strong>
+      <strong style="font-size:18px;letter-spacing:2px;">PROCUSTOMER40OFF</strong>
     </p>
-    <a href="${BASE_URL}/?promo=FAMILY50" style="display:inline-block;background:${PRIMARY};color:#ffffff;font-size:16px;font-weight:700;padding:14px 36px;border-radius:40px;text-decoration:none;">
+    <a href="${BASE_URL}/?promo=PROCUSTOMER40OFF" style="display:inline-block;background:${PRIMARY};color:#ffffff;font-size:16px;font-weight:700;padding:14px 36px;border-radius:40px;text-decoration:none;">
       Make a new portrait →
     </a>
   </div>`;
@@ -236,8 +236,8 @@ export async function sendOrderConfirmation(data: OrderConfirmationData): Promis
     "Contact us: https://www.crownedportraits.com/contact",
     "",
     "---",
-    "🐾 Liked the result? Get 40% off your next portrait with code FAMILY50",
-    "Create another: https://www.crownedportraits.com/?promo=FAMILY50",
+    "🐾 Liked the result? Get 40% off your next portrait with code PROCUSTOMER40OFF",
+    "Create another: https://www.crownedportraits.com/?promo=PROCUSTOMER40OFF",
     "",
     "Crowned Portraits — GGRetro LLC",
   );
@@ -310,8 +310,8 @@ export async function sendTrackingNotification(data: TrackingNotificationData): 
     "Contact us: https://www.crownedportraits.com/contact",
     "",
     "---",
-    "🐾 Liked the result? Get 40% off your next portrait with code FAMILY50",
-    "Create another: https://www.crownedportraits.com/?promo=FAMILY50",
+    "🐾 Liked the result? Get 40% off your next portrait with code PROCUSTOMER40OFF",
+    "Create another: https://www.crownedportraits.com/?promo=PROCUSTOMER40OFF",
     "",
     "Crowned Portraits — GGRetro LLC",
   ];
