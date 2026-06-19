@@ -42,7 +42,7 @@ export default function Home() {
   return (
     <>
       <div className="bg-[var(--primary)] py-2 text-center text-xs font-semibold tracking-[0.08em] text-[var(--on-primary)]">
-        SUMMER SALE: 30% OFF IN ALL PACKAGES
+        SUMMER SALE: 30% OFF + FREE SHIPPING!
       </div>
 
       <header className="sticky top-0 z-50 border-b border-[var(--outline-variant)] bg-[color:rgba(249,249,252,0.8)] backdrop-blur-[10px]">
@@ -207,8 +207,8 @@ export default function Home() {
                 },
                 {
                   emoji: "🚚",
-                  title: "Fast shipping on prints",
-                  body: "Premium canvas prints shipped quickly. Museum-worthy quality, guaranteed.",
+                  title: "FREE shipping on prints",
+                  body: "Premium canvas prints shipped at no cost. Museum-worthy quality, guaranteed.",
                 },
               ].map((card) => (
                 <div
