@@ -362,7 +362,7 @@ export default function Home() {
             <div className="font-[var(--font-playfair)] text-2xl font-bold text-[var(--on-surface)]">Crowned Portraits</div>
             <nav className="flex flex-wrap gap-6 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--on-surface)]">
               <a className="transition-all hover:text-[var(--primary)]" href="#">About</a>
-              <a className="transition-all hover:text-[var(--primary)]" href="#">FAQ</a>
+              <a className="transition-all hover:text-[var(--primary)]" href="/#faq">FAQ</a>
               <a className="transition-all hover:text-[var(--primary)]" href="/contact">Contact</a>
               <a className="transition-all hover:text-[var(--primary)]" href="/privacy">Privacy</a>
               <a className="transition-all hover:text-[var(--primary)]" href="/terms">Terms</a>
