@@ -25,39 +25,13 @@ async function applyWatermark(url: string): Promise<Buffer> {
     throw new Error("overlay.png not found in public/");
   }
 
-  const tile = await sharp(overlayPath).png().toBuffer();
-
-  let rotatedTile = await sharp(tile)
-    .rotate(-30, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
+  const overlay = await sharp(overlayPath)
+    .resize(w, h, { fit: "fill" })
     .png()
     .toBuffer();
 
-  let { width: tw = 600, height: th = 120 } = await sharp(rotatedTile).metadata();
-
-  if (tw > w || th > h) {
-    const scale = Math.min(w / tw, h / th);
-    const resized = await sharp(rotatedTile)
-      .resize({ width: Math.round(tw * scale), height: Math.round(th * scale) })
-      .png()
-      .toBuffer();
-    tw = (await sharp(resized).metadata()).width ?? tw;
-    th = (await sharp(resized).metadata()).height ?? th;
-    rotatedTile = resized;
-  }
-
-  const composites: sharp.OverlayOptions[] = [];
-  const stepX = tw;
-  const stepY = Math.round(th * 1.6);
-
-  for (let row = 0; row * stepY < h + th; row++) {
-    const offsetX = row % 2 !== 0 ? Math.round(stepX / 2) : 0;
-    for (let col = 0; col * stepX - offsetX < w + tw; col++) {
-      composites.push({ input: rotatedTile, left: col * stepX - offsetX, top: row * stepY, blend: "over" });
-    }
-  }
-
   return sharp(baseBuffer)
-    .composite(composites)
+    .composite([{ input: overlay, blend: "over" }])
     .jpeg({ quality: 85 })
     .toBuffer();
 }
