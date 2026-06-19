@@ -106,17 +106,17 @@ export default function Home() {
 
               <PortraitWizard />
 
-              <div className="flex flex-wrap gap-4 text-xs text-[color:rgba(255,255,255,0.85)]">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[12px] text-[var(--tertiary-fixed-dim)]">check</span>
+              <div className="flex flex-nowrap items-center gap-1.5 text-[11px] text-[color:rgba(255,255,255,0.85)] sm:gap-4 sm:text-xs">
+                <div className="flex items-center gap-0.5 sm:gap-2">
+                  <span className="material-symbols-outlined text-[11px] text-[var(--tertiary-fixed-dim)] sm:text-[14px]">check</span>
                   <span>Free preview</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[12px] text-[var(--tertiary-fixed-dim)]">check</span>
+                <div className="flex items-center gap-0.5 sm:gap-2">
+                  <span className="material-symbols-outlined text-[11px] text-[var(--tertiary-fixed-dim)] sm:text-[14px]">check</span>
                   <span>No sign up</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[12px] text-[var(--tertiary-fixed-dim)]">check</span>
+                <div className="flex items-center gap-0.5 sm:gap-2">
+                  <span className="material-symbols-outlined text-[11px] text-[var(--tertiary-fixed-dim)] sm:text-[14px]">check</span>
                   <span>Private and secure</span>
                 </div>
               </div>
