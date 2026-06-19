@@ -260,7 +260,7 @@ export default async function SuccessPage({
               </h3>
               <p className="mt-1 text-sm text-[var(--on-surface-variant)]">
                 Create another portrait now with{" "}
-                <strong>50% off</strong> using the code:{" "}
+                <strong>40% off</strong> using the code:{" "}
                 <span className="inline-block rounded bg-[var(--tertiary-container)] px-3 py-1 font-mono text-sm font-bold tracking-wider text-[var(--on-tertiary-container)]">
                   FAMILY50
                 </span>

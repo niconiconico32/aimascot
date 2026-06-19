@@ -139,7 +139,7 @@ function upsellBanner(): string {
       🐾 Liked the result?
     </p>
     <p style="margin:0 0 16px;font-size:14px;color:#6b4e00;line-height:1.5;">
-      Get <strong>50% off</strong> your next portrait with code
+      Get <strong>40% off</strong> your next portrait with code
       <strong style="font-size:18px;letter-spacing:2px;">FAMILY50</strong>
     </p>
     <a href="${BASE_URL}/?promo=FAMILY50" style="display:inline-block;background:${PRIMARY};color:#ffffff;font-size:16px;font-weight:700;padding:14px 36px;border-radius:40px;text-decoration:none;">
@@ -148,13 +148,9 @@ function upsellBanner(): string {
   </div>`;
 }
 
-function navLinks(showTrack: boolean, trackUrl: string): string {
-  const links = [
-    showTrack ? `<a href="${trackUrl}" style="display:inline-block;color:${PRIMARY};font-size:14px;font-weight:600;text-decoration:underline;margin:0 12px;">Track Order</a>` : "",
-    `<a href="${BASE_URL}/contact" style="display:inline-block;color:${PRIMARY};font-size:14px;font-weight:600;text-decoration:underline;margin:0 12px;">Contact Support</a>`,
-  ];
+function navLinks(): string {
   return `<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding-bottom:12px;">
-    ${links.filter(Boolean).join("")}
+    <a href="${BASE_URL}/contact" style="display:inline-block;color:${PRIMARY};font-size:14px;font-weight:600;text-decoration:underline;margin:0 12px;">Contact Support</a>
   </td></tr></table>`;
 }
 
@@ -201,7 +197,7 @@ export async function sendOrderConfirmation(data: OrderConfirmationData): Promis
       ${trackingInfo(data.customerEmail)}
     ` : ""}
     ${hr()}
-    ${navLinks(isPhysical, trackUrl)}
+    ${navLinks()}
     ${hr()}
     ${upsellBanner()}
   `;
@@ -240,7 +236,7 @@ export async function sendOrderConfirmation(data: OrderConfirmationData): Promis
     "Contact us: https://www.crownedportraits.com/contact",
     "",
     "---",
-    "🐾 Liked the result? Get 50% off your next portrait with code FAMILY50",
+    "🐾 Liked the result? Get 40% off your next portrait with code FAMILY50",
     "Create another: https://www.crownedportraits.com/?promo=FAMILY50",
     "",
     "Crowned Portraits — GGRetro LLC",
@@ -280,7 +276,6 @@ export async function sendTrackingNotification(data: TrackingNotificationData): 
   }
 
   const resend = new Resend(apiKey);
-  const trackUrl = `${BASE_URL}/success?session_id=${data.sessionId}`;
 
   const htmlBody = `
     ${heading(`📦 Your ${data.productLabel} is on the way!`)}
@@ -301,7 +296,7 @@ export async function sendTrackingNotification(data: TrackingNotificationData): 
     </div>
     ` : ""}
     ${hr()}
-    ${navLinks(false, trackUrl)}
+    ${navLinks()}
     ${hr()}
     ${upsellBanner()}
   `;
@@ -315,7 +310,7 @@ export async function sendTrackingNotification(data: TrackingNotificationData): 
     "Contact us: https://www.crownedportraits.com/contact",
     "",
     "---",
-    "🐾 Liked the result? Get 50% off your next portrait with code FAMILY50",
+    "🐾 Liked the result? Get 40% off your next portrait with code FAMILY50",
     "Create another: https://www.crownedportraits.com/?promo=FAMILY50",
     "",
     "Crowned Portraits — GGRetro LLC",
