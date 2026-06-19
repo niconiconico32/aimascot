@@ -31,7 +31,7 @@ type CheckoutPayload = {
   shippingFee: number;
   giftWrap: boolean;
   smsUpdates: boolean;
-  notes: string;
+  shippingMethod?: string;
   email: string;
   cancelPath: string;
   upsells: CheckoutUpsell[];
@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
         packageTitle: payload.packageTitle,
         size: payload.size,
         smsUpdates: String(payload.smsUpdates),
-        notes: payload.notes.slice(0, 500),
+        shippingMethod: payload.shippingMethod ?? "standard",
         // Include clean image URL so the webhook can trigger printing / upscaling
         ...(payload.generatedImageUrl && { generatedImageUrl: payload.generatedImageUrl }),
       },

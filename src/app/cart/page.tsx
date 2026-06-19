@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-type CartFieldName = "email" | "notes";
+type CartFieldName = "email";
 
 type UpsellProduct = {
   id:  "mug" ;
@@ -29,6 +29,11 @@ const UPSELL_PRODUCTS: readonly UpsellProduct[] = [
   { id: "mug", name: "Add a Mug with this portrait", price: 18, emoji: "☕" },
 ];
 
+const SHIPPING_OPTIONS = [
+  { id: "standard", label: "Standard (5–8 business days)", price: 7.99 },
+  { id: "express", label: "Express (2–3 business days)", price: 15.99 },
+] as const;
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function getInputClass(hasError: boolean, isDisabled = false) {
@@ -49,9 +54,6 @@ function validateCartField(field: CartFieldName, value: string) {
       if (!trimmed) return "Email is required.";
       if (!EMAIL_REGEX.test(trimmed)) return "Enter a valid email address.";
       return null;
-    case "notes":
-      if (trimmed.length > 300) return "Order note must be 300 characters or fewer.";
-      return null;
     default:
       return null;
   }
@@ -63,7 +65,7 @@ function CartPageContent() {
     if (typeof window === "undefined") return "";
     return sessionStorage.getItem("leadEmail") ?? localStorage.getItem("leadEmail") ?? "";
   });
-  const [notes, setNotes] = useState("");
+  const [shippingOption, setShippingOption] = useState<string>("standard");
   const [giftWrap, setGiftWrap] = useState(false);
   const [smsUpdates, setSmsUpdates] = useState(true);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -99,7 +101,8 @@ function CartPageContent() {
       return sum + product.price * selectedUpsells[product.id];
     }, 0);
     const giftWrapFee = giftWrap ? 9 : 0;
-    const shippingFee = packageKey === "digital" ? 0 : 7;
+    const selectedShipping = SHIPPING_OPTIONS.find((o) => o.id === shippingOption);
+    const shippingFee = packageKey === "digital" ? 0 : (selectedShipping?.price ?? 0);
     const subtotal = basePrice + giftWrapFee + upsellTotal;
 
     let discountAmount = 0;
@@ -113,8 +116,8 @@ function CartPageContent() {
 
     const total = subtotal + shippingFee - discountAmount;
 
-    return { giftWrapFee, shippingFee, subtotal, total, upsellTotal, discountAmount };
-  }, [basePrice, giftWrap, packageKey, selectedUpsells, appliedPromotion]);
+    return { giftWrapFee, shippingFee, subtotal, total, upsellTotal, discountAmount, shippingId: shippingOption };
+  }, [basePrice, giftWrap, packageKey, selectedUpsells, appliedPromotion, shippingOption]);
 
   const validateSingleField = (field: CartFieldName, value: string) => {
     const error = validateCartField(field, value);
@@ -129,7 +132,6 @@ function CartPageContent() {
     const nextErrors: Partial<Record<CartFieldName, string>> = {};
     const fields: Array<[CartFieldName, string]> = [
       ["email", email],
-      ["notes", notes],
     ];
     fields.forEach(([field, value]) => {
       const error = validateCartField(field, value);
@@ -174,9 +176,9 @@ function CartPageContent() {
           // upscale to 4K and send to Gelato / attach to delivery email.
           generatedImageUrl: sessionStorage.getItem("cleanPortraitUrl") ?? "",
           shippingFee: summary.shippingFee,
+          shippingMethod: summary.shippingId,
           giftWrap,
           smsUpdates,
-          notes,
           email,
           cancelPath: `${window.location.pathname}${window.location.search}`,
           upsells,
@@ -252,10 +254,9 @@ function CartPageContent() {
   const isFormValid = useMemo(() => {
     return (
       Boolean(imagePreview) &&
-      validateCartField("email", email) === null &&
-      validateCartField("notes", notes) === null
+      validateCartField("email", email) === null
     );
-  }, [email, imagePreview, notes]);
+  }, [email, imagePreview]);
 
   return (
     <main className="min-h-screen bg-[var(--surface)] px-4 py-6 pb-28 text-[var(--on-surface)] sm:px-6 lg:py-12 lg:pb-12">
@@ -305,29 +306,33 @@ function CartPageContent() {
             </label>
 
 
-            {/* Order note */}
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-[var(--on-surface)]">Order note <span className="font-normal text-[var(--on-surface-variant)]">(optional)</span></span>
-              <textarea
-                rows={3}
-                value={notes}
-                onChange={(event) => {
-                  setNotes(event.target.value);
-                  if (fieldErrors.notes) validateSingleField("notes", event.target.value);
-                }}
-                onBlur={(event) => validateSingleField("notes", event.target.value)}
-                placeholder="Gift message, printing preference, special request…"
-                maxLength={300}
-                aria-invalid={fieldErrors.notes ? "true" : "false"}
-                className={getInputClass(Boolean(fieldErrors.notes))}
-              />
-              <div className="mt-1.5 flex justify-between text-xs text-[var(--on-surface-variant)]">
-                {fieldErrors.notes ? (
-                  <span className="text-[var(--error)]">{fieldErrors.notes}</span>
-                ) : <span />}
-                <span>{notes.length}/300</span>
+            {/* Shipping method */}
+            {packageKey !== "digital" ? (
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-semibold text-[var(--on-surface)]">Shipping method</span>
+                <select
+                  value={shippingOption}
+                  onChange={(e) => setShippingOption(e.target.value)}
+                  className="w-full rounded-[var(--radius-default)] border border-[var(--outline-variant)] bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(32,60,185,0.12)]"
+                >
+                  {SHIPPING_OPTIONS.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.label} — ${opt.price}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1.5 text-xs text-[var(--on-surface-variant)]">
+                  Shipping address will be collected at checkout.
+                </p>
+              </label>
+            ) : (
+              <div className="rounded-[var(--radius-md)] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-4 py-3">
+                <p className="text-sm font-medium text-[var(--on-surface)]">Digital delivery</p>
+                <p className="mt-0.5 text-xs text-[var(--on-surface-variant)]">
+                  No shipping needed — delivered to your inbox.
+                </p>
               </div>
-            </label>
+            )}
 
             {/* Desktop CTA */}
             <button
