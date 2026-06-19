@@ -1,20 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getCanvasProductUid } from "@/lib/gelato";
-
 export const runtime = "nodejs";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Shipping rates per country (USD) ──────────────────────────────────────
+// Gelato's v4 API doesn't expose a quote endpoint, so we use flat rates.
+// Prices are for a single canvas print (12×16 – 24×36).
 
-type QuoteRequest = {
-  country: string;
-  state?: string;
-  city?: string;
-  postcode: string;
-  productUid?: string;
-  /** Alternative to productUid — resolves via getCanvasProductUid(). */
-  size?: string;
+type RateEntry = {
+  standard: number;
+  express: number;
+  /** Typical delivery windows (business days). */
+  standardDays: [number, number];
+  expressDays: [number, number];
 };
+
+const RATES: Record<string, RateEntry> = {
+  US: { standard: 7.99, express: 15.99, standardDays: [5, 8], expressDays: [2, 4] },
+  CA: { standard: 12.99, express: 24.99, standardDays: [6, 10], expressDays: [3, 5] },
+  GB: { standard: 14.99, express: 29.99, standardDays: [6, 10], expressDays: [3, 5] },
+  IE: { standard: 14.99, express: 29.99, standardDays: [6, 10], expressDays: [3, 5] },
+  ES: { standard: 14.99, express: 29.99, standardDays: [6, 10], expressDays: [3, 5] },
+  FR: { standard: 14.99, express: 29.99, standardDays: [6, 10], expressDays: [3, 5] },
+  DE: { standard: 14.99, express: 29.99, standardDays: [6, 10], expressDays: [3, 5] },
+  IT: { standard: 14.99, express: 29.99, standardDays: [6, 10], expressDays: [3, 5] },
+  AU: { standard: 16.99, express: 32.99, standardDays: [8, 14], expressDays: [4, 7] },
+  NZ: { standard: 16.99, express: 32.99, standardDays: [8, 14], expressDays: [4, 7] },
+  MX: { standard: 12.99, express: 24.99, standardDays: [6, 10], expressDays: [3, 5] },
+};
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type Price = {
   amount: number;
@@ -33,94 +47,51 @@ type ShipmentMethod = {
   deliveryDays: DeliveryDays;
 };
 
-type GelatoQuoteResponse = {
-  shipmentMethods: ShipmentMethod[];
-};
-
 // ─── Endpoint ────────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as QuoteRequest;
+    const body = (await request.json()) as { country: string; postcode: string };
 
-    if (!body.country || !body.postcode) {
+    const country = body.country?.toUpperCase();
+    if (!country || !body.postcode) {
       return NextResponse.json(
         { error: "Missing required fields: country, postcode." },
         { status: 400 },
       );
     }
 
-    if (body.country.length !== 2) {
+    if (country.length !== 2) {
       return NextResponse.json(
         { error: "Country must be a 2-letter ISO code." },
         { status: 400 },
       );
     }
 
-    const resolvedUid = body.productUid ?? (body.size ? getCanvasProductUid(body.size) : undefined);
-
-    if (!resolvedUid) {
+    const rateEntry = RATES[country];
+    if (!rateEntry) {
       return NextResponse.json(
-        { error: "Could not resolve productUid. Provide productUid or size." },
-        { status: 400 },
-      );
-    }
-
-    const apiKey = (process.env.GELATO_API_KEY ?? "").trim();
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "GELATO_API_KEY is not configured." },
-        { status: 500 },
-      );
-    }
-
-    const payload = {
-      recipient: {
-        country: body.country.toUpperCase(),
-        ...(body.state ? { state: body.state } : {}),
-        ...(body.city ? { city: body.city } : {}),
-        postcode: body.postcode,
-      },
-      products: [
-        {
-          itemReferenceId: "main-canvas-item",
-          productUid: resolvedUid,
-          quantity: 1,
-        },
-      ],
-    };
-
-    const response = await fetch(
-      "https://api.gelato.com/v1/orders/quote",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-KEY": apiKey,
-        },
-        body: JSON.stringify(payload),
-      },
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[shipping-quote] Gelato error:", response.status, errorText);
-      return NextResponse.json(
-        { error: `Gelato API error (${response.status}).` },
-        { status: 502 },
-      );
-    }
-
-    const data = (await response.json()) as GelatoQuoteResponse;
-
-    if (!data.shipmentMethods || data.shipmentMethods.length === 0) {
-      return NextResponse.json(
-        { error: "No shipping methods available for this destination." },
+        { error: `Shipping is not available for ${country} yet.` },
         { status: 404 },
       );
     }
 
-    return NextResponse.json({ shipmentMethods: data.shipmentMethods });
+    const shipmentMethods: ShipmentMethod[] = [
+      {
+        carrier: "Standard",
+        serviceName: "Standard Shipping",
+        totalPrice: { amount: rateEntry.standard, currency: "USD" },
+        deliveryDays: { min: rateEntry.standardDays[0], max: rateEntry.standardDays[1] },
+      },
+      {
+        carrier: "Express",
+        serviceName: "Express Shipping",
+        totalPrice: { amount: rateEntry.express, currency: "USD" },
+        deliveryDays: { min: rateEntry.expressDays[0], max: rateEntry.expressDays[1] },
+      },
+    ];
+
+    return NextResponse.json({ shipmentMethods });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[shipping-quote]", message);

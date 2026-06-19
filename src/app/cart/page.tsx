@@ -636,7 +636,7 @@ function CartPageContent() {
                 )}
                 <div className="flex justify-between text-base font-extrabold text-[var(--on-surface)]">
                   <span>Total</span>
-                  <span className="text-[var(--primary)]">$${summary.total.toFixed(2)}</span>
+                  <span className="text-[var(--primary)]">${summary.total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -650,7 +650,7 @@ function CartPageContent() {
         <div className="mx-auto flex max-w-[1080px] items-center justify-between gap-3">
           <div>
             <p className="text-xs text-[var(--on-surface-variant)]">Total</p>
-            <p className="text-xl font-extrabold text-[var(--primary)]">$${summary.total.toFixed(2)}</p>
+            <p className="text-xl font-extrabold text-[var(--primary)]">${summary.total.toFixed(2)}</p>
           </div>
           <button
             type="button"
