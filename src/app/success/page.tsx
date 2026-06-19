@@ -252,11 +252,11 @@ export default async function SuccessPage({
         <section className="rounded-[var(--radius-xl)] border border-[var(--tertiary)]/30 bg-gradient-to-br from-[var(--tertiary-container)]/20 to-[var(--tertiary)]/10 p-6 shadow-sm sm:p-8">
           <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--tertiary-container)] text-3xl">
-              🐾
+              👑
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="font-[var(--font-playfair)] text-xl font-bold">
-                Got another pet?
+                Want another one?
               </h3>
               <p className="mt-1 text-sm text-[var(--on-surface-variant)]">
                 Create another portrait now with{" "}

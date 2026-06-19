@@ -16,8 +16,8 @@ const headingFont = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Vibrant Paws",
-  description: "Custom vibrant pet portraits",
+  title: "Crowned Portraits",
+  description: "Custom vibrant portraits for your loved ones.",
 };
 
 export default function RootLayout({

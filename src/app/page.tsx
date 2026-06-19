@@ -42,7 +42,7 @@ export default function Home() {
   return (
     <>
       <div className="bg-[var(--primary)] py-2 text-center text-xs font-semibold tracking-[0.08em] text-[var(--on-primary)]">
-        SPRING DROP: 60% OFF + FREE SHIPPING
+        SUMMER SALE: 30% OFF IN ALL PACKAGES
       </div>
 
       <header className="sticky top-0 z-50 border-b border-[var(--outline-variant)] bg-[color:rgba(249,249,252,0.8)] backdrop-blur-[10px]">
@@ -178,7 +178,7 @@ export default function Home() {
             <div className="mb-10 text-center">
               <h2 className="font-[var(--font-playfair)] text-3xl font-extrabold leading-tight text-white sm:text-4xl lg:text-5xl">
                 Why{" "}
-                <span className="text-[var(--tertiary-container)]">50,000+</span>{" "}
+                <span className="text-[var(--tertiary-container)]">5,000+</span>{" "}
                 customers love{" "}
                 <span className="italic text-[var(--tertiary-container)]">Crowned Portraits</span>
               </h2>
@@ -207,8 +207,8 @@ export default function Home() {
                 },
                 {
                   emoji: "🚚",
-                  title: "Free shipping on prints",
-                  body: "Premium canvas prints shipped free. Museum-worthy quality, guaranteed.",
+                  title: "Fast shipping on prints",
+                  body: "Premium canvas prints shipped quickly. Museum-worthy quality, guaranteed.",
                 },
               ].map((card) => (
                 <div
@@ -241,7 +241,7 @@ export default function Home() {
                 )}
               </div>
               <p className="text-sm text-white/80">
-                <span className="font-extrabold text-[var(--tertiary-container)]">350,000+</span>{" "}
+                <span className="font-extrabold text-[var(--tertiary-container)]">5,000+</span>{" "}
                 happy customers turned into masterpieces!
               </p>
             </div>

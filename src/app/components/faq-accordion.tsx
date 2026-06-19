@@ -61,7 +61,7 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: "What if I lose my digital file?",
     answer:
-      "No worries. If you ever misplace your download, just email us at help@crownedportraits.com with your order details and we'll resend the link immediately — no questions asked.",
+      "No worries. If you ever misplace your download, just email us at hello@crownedportraits.com with your order details and we'll resend the link immediately — no questions asked.",
   },
   {
     question: "How can I cancel my order?",

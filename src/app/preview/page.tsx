@@ -205,8 +205,8 @@ export default function PreviewPage() {
               {isRegenerating
                 ? "Repainting your masterpiece..."
                 : limitReached
-                  ? "You've used your 5 free previews for today. Come back tomorrow or secure your package now."
-                  : "Didn't like it? Try again or choose a new style."}
+                  ? "You've used your 5 free previews for today.  Come back tomorrow or choose a package."
+                  : "Didn't like it? Try again to get a new version."}
             </p>
             
             {isRegenerating ? (
@@ -226,7 +226,7 @@ export default function PreviewPage() {
                     Try Again
                   </button>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--on-surface-variant)] opacity-60">
-                    or
+                    or choose a different style
                   </span>
                 </div>
 
