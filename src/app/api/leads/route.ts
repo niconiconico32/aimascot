@@ -8,7 +8,6 @@ type LeadPayload = {
   email: string;
   subject?: string;
   style?: string;
-  personalizeText?: string;
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -28,7 +27,6 @@ export async function POST(request: NextRequest) {
         email: payload.email.trim().toLowerCase(),
         subject: payload.subject ?? null,
         style: payload.style ?? null,
-        personalize_text: payload.personalizeText?.trim() ?? null,
         source: "wizard",
       },
       { onConflict: "email" },

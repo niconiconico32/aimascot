@@ -47,10 +47,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { fileName, stylePrompt, personalizeText } = body as {
+    const { fileName, stylePrompt } = body as {
       fileName?: string;
       stylePrompt?: string;
-      personalizeText?: string;
     };
 
     if (!fileName) {
@@ -149,13 +148,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to store deliverable" }, { status: 500 });
     }
 
-    // 7. Return the public preview URL and the deliverables path
-    const { data: previewUrlData } = getSupabaseServerClient().storage
-      .from("previews")
-      .getPublicUrl(previewFileName);
+    // 7. Generate a signed URL for the watermarked preview (7-day expiry)
+    const { data: signedPreviewData, error: signedPreviewErr } =
+      await getSupabaseServerClient().storage
+        .from("previews")
+        .createSignedUrl(previewFileName, 604800);
+
+    if (signedPreviewErr || !signedPreviewData) {
+      console.error("[generate] preview signed URL error:", signedPreviewErr);
+      return NextResponse.json({ error: "Failed to generate preview URL" }, { status: 500 });
+    }
 
     const response = NextResponse.json({
-      imageData: previewUrlData.publicUrl,
+      imageData: signedPreviewData.signedUrl,
       cleanImageUrl: generatedUrl,
       remainingAttempts: data[0].remaining_attempts,
     });

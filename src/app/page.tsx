@@ -108,15 +108,15 @@ export default function Home() {
 
               <div className="flex flex-wrap gap-4 text-xs text-[color:rgba(255,255,255,0.85)]">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[14px] text-[var(--tertiary-fixed-dim)]">check</span>
+                  <span className="material-symbols-outlined text-[12px] text-[var(--tertiary-fixed-dim)]">check</span>
                   <span>Free preview</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[14px] text-[var(--tertiary-fixed-dim)]">check</span>
+                  <span className="material-symbols-outlined text-[12px] text-[var(--tertiary-fixed-dim)]">check</span>
                   <span>No sign up</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[14px] text-[var(--tertiary-fixed-dim)]">check</span>
+                  <span className="material-symbols-outlined text-[12px] text-[var(--tertiary-fixed-dim)]">check</span>
                   <span>Private and secure</span>
                 </div>
               </div>

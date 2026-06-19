@@ -44,7 +44,6 @@ export default function PreviewPage() {
     originalFileName: string;
     subjectId: Subject;
     styleId: Style;
-    personalizeText?: string;
   } | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
@@ -103,7 +102,6 @@ export default function PreviewPage() {
           subject: generationParams.subjectId,
           style: styleId,
           stylePrompt: styleOption.falPrompt,
-          personalizeText: generationParams.personalizeText,
         }),
       });
 

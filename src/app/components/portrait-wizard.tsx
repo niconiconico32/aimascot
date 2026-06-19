@@ -102,7 +102,6 @@ export default function PortraitWizard() {
   const [styleIdx, setStyleIdx] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [personalizeText, setPersonalizeText] = useState("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const apiDoneRef = useRef(false);
   const generatedUrlRef = useRef<string | null>(null);
@@ -156,7 +155,6 @@ export default function PortraitWizard() {
               originalFileName: selectedFile.name,
               subjectId: subject,
               styleId: style,
-              personalizeText: personalizeText.trim() || undefined,
             }),
           );
           router.push("/preview");
@@ -196,7 +194,7 @@ export default function PortraitWizard() {
           const selectedStyle = STYLES_BY_SUBJECT[subject].find((option) => option.id === style);
           if (selectedStyle) payload.stylePrompt = selectedStyle.falPrompt;
         }
-        if (personalizeText.trim()) payload.personalizeText = personalizeText.trim();
+        
 
         return fetch("/api/generate", {
           method: "POST",
@@ -223,15 +221,14 @@ export default function PortraitWizard() {
         if (typeof remainingAttempts === "number") {
           sessionStorage.setItem("remainingAttempts", String(remainingAttempts));
         }
-        sessionStorage.setItem(
-          "generationParams",
-          JSON.stringify({
-            originalFileName: fileName,
-            subjectId: subject,
-            styleId: style,
-            personalizeText: personalizeText.trim() || undefined,
-          }),
-        );
+          sessionStorage.setItem(
+            "generationParams",
+            JSON.stringify({
+              originalFileName: fileName,
+              subjectId: subject,
+              styleId: style,
+            }),
+          );
         apiDoneRef.current = true;
       })
       .catch(() => {
@@ -491,21 +488,6 @@ export default function PortraitWizard() {
               <p className="truncate text-sm font-semibold text-white">{selectedFile.name}</p>
               <p className="mt-0.5 text-xs text-white/50">Ready to paint</p>
             </div>
-          </div>
-
-          {/* Personalize input */}
-          <div className="relative mb-4">
-            <input
-              type="text"
-              value={personalizeText}
-              onChange={(e) => setPersonalizeText(e.target.value)}
-              placeholder="Personalize – add a crown, scepter..."
-              maxLength={120}
-              className="h-14 w-full rounded-[var(--radius-default)] border border-white/20 bg-[color:rgba(219,222,255,0.2)] px-4 py-3 pr-20 text-sm text-white placeholder-white/50 outline-none transition focus:border-[var(--primary-fixed)] focus:border-2"
-            />
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-white/40">
-              optional
-            </span>
           </div>
 
           {/* Create button */}
