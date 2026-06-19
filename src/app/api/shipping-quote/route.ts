@@ -43,9 +43,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as QuoteRequest;
 
-    if (!body.country || !body.postcode || !body.productUid) {
+    if (!body.country || !body.postcode) {
       return NextResponse.json(
-        { error: "Missing required fields: country, postcode, productUid." },
+        { error: "Missing required fields: country, postcode." },
         { status: 400 },
       );
     }
