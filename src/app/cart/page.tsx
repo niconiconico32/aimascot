@@ -14,11 +14,10 @@ type UpsellProduct = {
   emoji: string;
 };
 
-type ShipmentMethod = {
-  carrier: string;
-  serviceName: string;
-  totalPrice: { amount: number; currency: string };
-  deliveryDays: { min: number; max: number };
+type ShippingValidation = {
+  supported: boolean;
+  standardDays: [number, number];
+  expressDays: [number, number];
 };
 
 const PACKAGE_COPY = {
@@ -83,9 +82,8 @@ function CartPageContent() {
   });
   const [shippingCountry, setShippingCountry] = useState("");
   const [shippingPostcode, setShippingPostcode] = useState("");
-  const [shippingMethods, setShippingMethods] = useState<ShipmentMethod[]>([]);
-  const [selectedShippingIdx, setSelectedShippingIdx] = useState(0);
-  const [isLoadingShipping, setIsLoadingShipping] = useState(false);
+  const [deliveryDays, setDeliveryDays] = useState<[number, number] | null>(null);
+  const [isValidatingCountry, setIsValidatingCountry] = useState(false);
   const [shippingError, setShippingError] = useState<string | null>(null);
   const shippingDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [giftWrap, setGiftWrap] = useState(false);
@@ -118,36 +116,35 @@ function CartPageContent() {
   const basePrice = Number(searchParams.get("price") ?? (packageKey === "digital" ? 49 : 99));
   const packageDetails = PACKAGE_COPY[packageKey];
 
-  const fetchShippingQuotes = useCallback(async (country: string, postcode: string) => {
+  const validateDestination = useCallback(async (country: string, postcode: string) => {
     if (!country || !postcode || postcode.length < 3) return;
 
-    setIsLoadingShipping(true);
+    setIsValidatingCountry(true);
     setShippingError(null);
 
     try {
       const res = await fetch("/api/shipping-quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ country, postcode, size }),
+        body: JSON.stringify({ country, postcode }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setShippingError(data.error ?? "Could not load shipping options.");
-        setShippingMethods([]);
+        setShippingError(data.error ?? "We cannot ship to this destination yet.");
+        setDeliveryDays(null);
         return;
       }
 
-      setShippingMethods(data.shipmentMethods ?? []);
-      setSelectedShippingIdx(0);
+      setDeliveryDays(data.standardDays);
     } catch {
       setShippingError("Network error. Please try again.");
-      setShippingMethods([]);
+      setDeliveryDays(null);
     } finally {
-      setIsLoadingShipping(false);
+      setIsValidatingCountry(false);
     }
-  }, [size]);
+  }, []);
 
   useEffect(() => {
     if (packageKey === "digital") return;
@@ -156,23 +153,20 @@ function CartPageContent() {
 
     if (shippingCountry && shippingPostcode.length >= 3) {
       shippingDebounce.current = setTimeout(() => {
-        fetchShippingQuotes(shippingCountry, shippingPostcode);
+        validateDestination(shippingCountry, shippingPostcode);
       }, 600);
     }
 
     return () => {
       if (shippingDebounce.current) clearTimeout(shippingDebounce.current);
     };
-  }, [shippingCountry, shippingPostcode, packageKey, fetchShippingQuotes]);
-
-  const selectedShipping = shippingMethods[selectedShippingIdx];
+  }, [shippingCountry, shippingPostcode, packageKey, validateDestination]);
 
   const summary = useMemo(() => {
     const upsellTotal = UPSELL_PRODUCTS.reduce((sum, product) => {
       return sum + product.price * selectedUpsells[product.id];
     }, 0);
     const giftWrapFee = giftWrap ? 9 : 0;
-    const shippingFee = packageKey === "digital" ? 0 : (selectedShipping?.totalPrice.amount ?? 0);
     const subtotal = basePrice + giftWrapFee + upsellTotal;
 
     let discountAmount = 0;
@@ -184,14 +178,12 @@ function CartPageContent() {
       }
     }
 
-    const total = subtotal + shippingFee - discountAmount;
+    const total = subtotal - discountAmount;
 
     return {
-      giftWrapFee, shippingFee, subtotal, total, upsellTotal, discountAmount,
-      shippingCarrier: selectedShipping?.carrier ?? "",
-      shippingService: selectedShipping?.serviceName ?? "",
+      giftWrapFee, subtotal, total, upsellTotal, discountAmount,
     };
-  }, [basePrice, giftWrap, packageKey, selectedUpsells, appliedPromotion, selectedShipping]);
+  }, [basePrice, giftWrap, packageKey, selectedUpsells, appliedPromotion]);
 
   const validateSingleField = (field: CartFieldName, value: string) => {
     const error = validateCartField(field, value);
@@ -246,11 +238,9 @@ function CartPageContent() {
           basePrice,
           size,
           artworkUrl: imagePreview,
-          // Forward the clean (non-watermarked) Fal URL so the webhook can
-          // upscale to 4K and send to Gelato / attach to delivery email.
           generatedImageUrl: sessionStorage.getItem("cleanPortraitUrl") ?? "",
-          shippingFee: summary.shippingFee,
-          shippingMethod: summary.shippingCarrier ? `${summary.shippingCarrier} ${summary.shippingService}` : "standard",
+          shippingFee: 0,
+          shippingMethod: "free",
           giftWrap,
           smsUpdates,
           email,
@@ -380,7 +370,7 @@ function CartPageContent() {
             </label>
 
 
-            {/* Shipping destination & method */}
+            {/* Shipping destination */}
             {packageKey !== "digital" ? (
               <div className="space-y-4">
                 <div className="flex gap-3">
@@ -388,7 +378,7 @@ function CartPageContent() {
                     <span className="mb-1.5 block text-sm font-semibold text-[var(--on-surface)]">Country</span>
                     <select
                       value={shippingCountry}
-                      onChange={(e) => { setShippingCountry(e.target.value); setShippingMethods([]); }}
+                      onChange={(e) => { setShippingCountry(e.target.value); setDeliveryDays(null); }}
                       className="w-full rounded-[var(--radius-default)] border border-[var(--outline-variant)] bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(32,60,185,0.12)]"
                     >
                       <option value="">Select country</option>
@@ -402,7 +392,7 @@ function CartPageContent() {
                     <input
                       type="text"
                       value={shippingPostcode}
-                      onChange={(e) => { setShippingPostcode(e.target.value); setShippingMethods([]); }}
+                      onChange={(e) => { setShippingPostcode(e.target.value); setDeliveryDays(null); }}
                       placeholder="e.g. 10001"
                       autoComplete="postal-code"
                       maxLength={20}
@@ -411,10 +401,10 @@ function CartPageContent() {
                   </label>
                 </div>
 
-                {isLoadingShipping && (
+                {isValidatingCountry && (
                   <div className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-4 py-3">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent" />
-                    <span className="text-sm text-[var(--on-surface-variant)]">Getting shipping rates…</span>
+                    <span className="text-sm text-[var(--on-surface-variant)]">Checking availability…</span>
                   </div>
                 )}
 
@@ -422,38 +412,17 @@ function CartPageContent() {
                   <p className="text-sm text-[var(--error)]">{shippingError}</p>
                 )}
 
-                {shippingMethods.length > 0 && !isLoadingShipping && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-semibold text-[var(--on-surface)]">Shipping method</p>
-                    {shippingMethods.map((method, idx) => (
-                      <label
-                        key={`${method.carrier}-${method.serviceName}`}
-                        className={`flex cursor-pointer items-center gap-3 rounded-[var(--radius-md)] border px-4 py-3 transition ${
-                          idx === selectedShippingIdx
-                            ? "border-[var(--primary)] bg-[var(--primary-container)]/10"
-                            : "border-[var(--outline-variant)] bg-white hover:border-[var(--primary)]/50"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="shipping"
-                          checked={idx === selectedShippingIdx}
-                          onChange={() => setSelectedShippingIdx(idx)}
-                          className="h-4 w-4 shrink-0 text-[var(--primary)]"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-[var(--on-surface)]">
-                            {method.carrier} {method.serviceName}
-                          </p>
-                          <p className="text-xs text-[var(--on-surface-variant)]">
-                            {method.deliveryDays.min}–{method.deliveryDays.max} business days
-                          </p>
-                        </div>
-                        <p className="text-sm font-bold text-[var(--on-surface)] shrink-0">
-                          ${method.totalPrice.amount.toFixed(2)}
-                        </p>
-                      </label>
-                    ))}
+                {deliveryDays && !isValidatingCountry && !shippingError && (
+                  <div className="rounded-[var(--radius-md)] border border-[var(--tertiary)]/30 bg-[var(--tertiary-container)]/10 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[var(--tertiary)]">check_circle</span>
+                      <p className="text-sm font-semibold text-[var(--on-surface)]">
+                        Free shipping
+                      </p>
+                    </div>
+                    <p className="mt-1 text-xs text-[var(--on-surface-variant)]">
+                      Arrives in {deliveryDays[0]}–{deliveryDays[1]} business days — included in the price
+                    </p>
                   </div>
                 )}
               </div>
@@ -619,15 +588,12 @@ function CartPageContent() {
                   </div>
                 )}
                 
-                <div className="flex justify-between text-[var(--on-surface-variant)]">
-                  <span>
-                    Shipping
-                    {summary.shippingCarrier ? (
-                      <span className="block text-xs">{summary.shippingCarrier} {summary.shippingService}</span>
-                    ) : null}
-                  </span>
-                  <span className="text-right">{summary.shippingFee === 0 ? "Free" : `$${summary.shippingFee.toFixed(2)}`}</span>
-                </div>
+                {deliveryDays && (
+                  <div className="flex justify-between text-[var(--on-surface-variant)]">
+                    <span>Shipping</span>
+                    <span className="font-semibold text-[var(--tertiary)]">Free</span>
+                  </div>
+                )}
                 {summary.discountAmount > 0 && (
                   <div className="flex justify-between text-sm text-[var(--tertiary)]">
                     <span>Discount</span>

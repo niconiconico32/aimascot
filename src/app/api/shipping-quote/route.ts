@@ -2,49 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-// ─── Shipping rates per country (USD) ──────────────────────────────────────
-// Gelato's v4 API doesn't expose a quote endpoint, so we use flat rates.
-// Prices are for a single canvas print (12×16 – 24×36).
+// ─── Supported countries with delivery estimates ───────────────────────────
 
 type RateEntry = {
-  standard: number;
-  express: number;
-  /** Typical delivery windows (business days). */
   standardDays: [number, number];
   expressDays: [number, number];
 };
 
 const RATES: Record<string, RateEntry> = {
-  US: { standard: 7.99, express: 15.99, standardDays: [5, 8], expressDays: [2, 4] },
-  CA: { standard: 12.99, express: 24.99, standardDays: [6, 10], expressDays: [3, 5] },
-  GB: { standard: 14.99, express: 29.99, standardDays: [6, 10], expressDays: [3, 5] },
-  IE: { standard: 14.99, express: 29.99, standardDays: [6, 10], expressDays: [3, 5] },
-  ES: { standard: 14.99, express: 29.99, standardDays: [6, 10], expressDays: [3, 5] },
-  FR: { standard: 14.99, express: 29.99, standardDays: [6, 10], expressDays: [3, 5] },
-  DE: { standard: 14.99, express: 29.99, standardDays: [6, 10], expressDays: [3, 5] },
-  IT: { standard: 14.99, express: 29.99, standardDays: [6, 10], expressDays: [3, 5] },
-  AU: { standard: 16.99, express: 32.99, standardDays: [8, 14], expressDays: [4, 7] },
-  NZ: { standard: 16.99, express: 32.99, standardDays: [8, 14], expressDays: [4, 7] },
-  MX: { standard: 12.99, express: 24.99, standardDays: [6, 10], expressDays: [3, 5] },
-};
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-type Price = {
-  amount: number;
-  currency: string;
-};
-
-type DeliveryDays = {
-  min: number;
-  max: number;
-};
-
-type ShipmentMethod = {
-  carrier: string;
-  serviceName: string;
-  totalPrice: Price;
-  deliveryDays: DeliveryDays;
+  US: { standardDays: [5, 8], expressDays: [2, 4] },
+  CA: { standardDays: [6, 10], expressDays: [3, 5] },
+  GB: { standardDays: [6, 10], expressDays: [3, 5] },
+  IE: { standardDays: [6, 10], expressDays: [3, 5] },
+  ES: { standardDays: [6, 10], expressDays: [3, 5] },
+  FR: { standardDays: [6, 10], expressDays: [3, 5] },
+  DE: { standardDays: [6, 10], expressDays: [3, 5] },
+  IT: { standardDays: [6, 10], expressDays: [3, 5] },
+  AU: { standardDays: [8, 14], expressDays: [4, 7] },
+  NZ: { standardDays: [8, 14], expressDays: [4, 7] },
+  MX: { standardDays: [6, 10], expressDays: [3, 5] },
 };
 
 // ─── Endpoint ────────────────────────────────────────────────────────────────
@@ -76,22 +52,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const shipmentMethods: ShipmentMethod[] = [
-      {
-        carrier: "Standard",
-        serviceName: "Standard Shipping",
-        totalPrice: { amount: rateEntry.standard, currency: "USD" },
-        deliveryDays: { min: rateEntry.standardDays[0], max: rateEntry.standardDays[1] },
-      },
-      {
-        carrier: "Express",
-        serviceName: "Express Shipping",
-        totalPrice: { amount: rateEntry.express, currency: "USD" },
-        deliveryDays: { min: rateEntry.expressDays[0], max: rateEntry.expressDays[1] },
-      },
-    ];
-
-    return NextResponse.json({ shipmentMethods });
+    return NextResponse.json({
+      supported: true,
+      standardDays: rateEntry.standardDays,
+      expressDays: rateEntry.expressDays,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[shipping-quote]", message);
