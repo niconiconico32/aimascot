@@ -70,8 +70,7 @@ async function processOrderFulfillment(data: FulfillmentData): Promise<void> {
       const itemsHtml = items.map((i) => `<li style="padding:4px 0;font-size:14px;color:#333;">✓ ${i}</li>`).join("");
       const itemsText = items.map((i) => `• ${i}`).join("\n");
 
-      // ── Progress steps ───────────────────────────────────────────────────
-      const activeStep = !isPhysical ? "complete" : "preparing";
+      // ── Progress steps (physical only) ────────────────────────────────────
       const step = (label: string, state: "done" | "current" | "pending") => {
         const dot = state === "done" ? "✓" : state === "current" ? "◉" : "○";
         const color = state === "done" ? "#1e8a3e" : state === "current" ? "#1e3a8a" : "#b0b0b0";
@@ -84,16 +83,18 @@ async function processOrderFulfillment(data: FulfillmentData): Promise<void> {
 
       let progressHtml = "";
       if (isPhysical) {
+        const printLabel =
+          data.isCanvas && data.wantsMug
+            ? "Printing canvas & mug"
+            : data.isCanvas
+              ? "Printing canvas"
+              : "Printing mug";
         progressHtml = `
           ${step("Order received", "done")}
-          ${step("Preparing artwork", activeStep === "preparing" ? "current" : "done")}
-          ${step(`${data.isCanvas && data.wantsMug ? "Printing canvas & mug" : data.isCanvas ? "Printing canvas" : "Printing mug"}`, "pending")}
+          ${step("Preparing artwork", "current")}
+          ${step(printLabel, "pending")}
           ${step("Shipped", "pending")}
           ${step("Delivered", "pending")}`;
-      } else {
-        progressHtml = `
-          ${step("Order received", "done")}
-          ${step("Portrait ready — download below", "current")}`;
       }
 
       const trackUrl = `https://www.crownedportraits.com/success?session_id=${data.sessionId}`;
@@ -137,21 +138,7 @@ async function processOrderFulfillment(data: FulfillmentData): Promise<void> {
 
               <hr style="border:none;border-top:1px solid #e8e0d4;margin:24px 0;" />
 
-              <h2 style="margin:0 0 12px;font-size:16px;color:#1e3a8a;font-weight:700;">
-                Progress
-              </h2>
-              ${progressHtml}
-
-              ${isPhysical ? `
-              <hr style="border:none;border-top:1px solid #e8e0d4;margin:24px 0;" />
-              <p style="margin:0 0 4px;font-size:13px;color:#5a5a5a;text-align:center;">
-                Tracking updates will be sent to:
-              </p>
-              <p style="margin:0 0 16px;font-size:14px;color:#1e3a8a;font-weight:600;text-align:center;">
-                ${data.customerEmail}
-              </p>
-              ` : `
-              <div style="text-align:center;margin:20px 0 0;">
+              <div style="text-align:center;margin:20px 0;">
                 <a href="${finalImageUrl || "#"}" style="display:inline-block;background:#1e3a8a;color:#ffffff;font-size:16px;font-weight:700;padding:14px 36px;border-radius:40px;text-decoration:none;">
                   Download your portrait
                 </a>
@@ -159,14 +146,31 @@ async function processOrderFulfillment(data: FulfillmentData): Promise<void> {
                   Link expires in 7 days
                 </p>
               </div>
-              `}
+
+              ${isPhysical ? `
+              <hr style="border:none;border-top:1px solid #e8e0d4;margin:24px 0;" />
+
+              <h2 style="margin:0 0 12px;font-size:16px;color:#1e3a8a;font-weight:700;">
+                Progress
+              </h2>
+              ${progressHtml}
+
+              <hr style="border:none;border-top:1px solid #e8e0d4;margin:24px 0;" />
+
+              <p style="margin:0 0 4px;font-size:13px;color:#5a5a5a;text-align:center;">
+                Tracking updates will be sent to:
+              </p>
+              <p style="margin:0 0 16px;font-size:14px;color:#1e3a8a;font-weight:600;text-align:center;">
+                ${data.customerEmail}
+              </p>
+              ` : ""}
 
               <hr style="border:none;border-top:1px solid #e8e0d4;margin:24px 0;" />
 
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding-bottom:12px;">
-                    <a href="${trackUrl}" style="display:inline-block;color:#1e3a8a;font-size:14px;font-weight:600;text-decoration:underline;margin:0 12px;">Track Order</a>
+                    ${isPhysical ? `<a href="${trackUrl}" style="display:inline-block;color:#1e3a8a;font-size:14px;font-weight:600;text-decoration:underline;margin:0 12px;">Track Order</a>` : ""}
                     <a href="https://www.crownedportraits.com/contact" style="display:inline-block;color:#1e3a8a;font-size:14px;font-weight:600;text-decoration:underline;margin:0 12px;">Contact Support</a>
                   </td>
                 </tr>
@@ -210,21 +214,20 @@ Order reference: ${orderRef}
 Order summary:
 ${itemsText}
 
+Download: ${finalImageUrl || "(link coming soon)"}
+(Link expires in 7 days)
+${isPhysical ? `
 Progress:
-${isPhysical
-  ? `✓ Order received
+✓ Order received
 ◉ Preparing artwork
 ○ ${data.isCanvas && data.wantsMug ? "Printing canvas & mug" : data.isCanvas ? "Printing canvas" : "Printing mug"}
 ○ Shipped
-○ Delivered`
-  : `✓ Order received
-✓ Portrait ready — Download below:
-  ${finalImageUrl || "(link coming soon)"}
-  (Link expires in 7 days)`}
+○ Delivered
 
-${isPhysical ? `Tracking updates will be sent to: ${data.customerEmail}` : ""}
+Tracking updates will be sent to: ${data.customerEmail}
 
 Track your order: ${trackUrl}
+` : ""}
 Contact us: https://www.crownedportraits.com/contact
 
 ---
