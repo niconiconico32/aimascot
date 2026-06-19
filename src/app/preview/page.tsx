@@ -256,8 +256,8 @@ export default function PreviewPage() {
                 </h3>
 
                 <div className="my-6 text-center">
-                  <span className="mr-2 text-lg font-medium text-[var(--on-surface-variant)] line-through opacity-70">$229</span>
-                  <span className="text-5xl font-extrabold text-[var(--on-surface)]">$79</span>
+                  <span className="mr-2 text-lg font-medium text-[var(--on-surface-variant)] line-through opacity-70">${Math.round(selectedCanvasSize.price * 1.7)}</span>
+                  <span className="text-5xl font-extrabold text-[var(--on-surface)]">${selectedCanvasSize.price}</span>
                 </div>
 
                 <p className="mb-6 text-center text-sm leading-relaxed text-[var(--on-surface-variant)]">
