@@ -49,6 +49,13 @@ export default function PreviewPage() {
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
   const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
+  const [generationHistory, setGenerationHistory] = useState<Array<{ id: string; url: string; styleLabel: string; cleanUrl?: string }>>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const stored = sessionStorage.getItem("generationHistory");
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
 
   useEffect(() => {
     setImagePreview(
@@ -61,6 +68,16 @@ export default function PreviewPage() {
     const storedRemaining = sessionStorage.getItem("remainingAttempts");
     if (storedRemaining !== null) {
       setRemainingAttempts(Number(storedRemaining));
+    }
+
+    const previewUrl = sessionStorage.getItem("generatedPortraitUrl") ?? sessionStorage.getItem("portraitPreview");
+    if (previewUrl) {
+      setGenerationHistory((prev) => {
+        if (prev.length > 0) return prev;
+        const initial = [{ id: "original", url: previewUrl, styleLabel: "Current" }];
+        sessionStorage.setItem("generationHistory", JSON.stringify(initial));
+        return initial;
+      });
     }
   }, []);
 
@@ -106,11 +123,22 @@ export default function PreviewPage() {
         sessionStorage.setItem("remainingAttempts", String(data.remainingAttempts));
         setLimitReached(false);
       }
-      if (data.cleanImageUrl) {
-        sessionStorage.setItem("cleanPortraitUrl", data.cleanImageUrl);
+      const cleanUrl = data.cleanImageUrl;
+      if (cleanUrl) {
+        sessionStorage.setItem("cleanPortraitUrl", cleanUrl);
       }
+      const styleLabel = newStyleId
+        ? STYLES_BY_SUBJECT[generationParams.subjectId]?.find((s) => s.id === newStyleId)?.label ?? "Custom"
+        : generationParams.styleId
+          ? STYLES_BY_SUBJECT[generationParams.subjectId]?.find((s) => s.id === generationParams.styleId)?.label ?? "Custom"
+          : "Custom";
       sessionStorage.setItem("generatedPortraitUrl", data.imageData);
       setImagePreview(data.imageData);
+      setGenerationHistory((prev) => {
+        const next = [...prev, { id: crypto.randomUUID(), url: data.imageData, styleLabel, cleanUrl }];
+        sessionStorage.setItem("generationHistory", JSON.stringify(next));
+        return next;
+      });
       if (newStyleId) {
         const updated = { ...generationParams, styleId: newStyleId };
         setGenerationParams(updated);
@@ -232,6 +260,51 @@ export default function PreviewPage() {
                   <p className="mt-2 text-center text-[11px] font-medium tracking-wide text-[var(--on-surface-variant)] opacity-80">
                     {remainingAttempts} free previews left
                   </p>
+                )}
+
+                {/* ── Generation history thumbnails ── */}
+                {generationHistory.length > 1 && (
+                  <div className="mt-4 w-full max-w-[600px] mx-auto">
+                    <p className="mb-2 text-center text-[11px] font-medium tracking-wide text-[var(--on-surface-variant)]">
+                      Your previews — tap to compare
+                    </p>
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                      {generationHistory.map((item, idx) => {
+                        const isActive = item.url === imagePreview;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => {
+                              setImagePreview(item.url);
+                              sessionStorage.setItem("generatedPortraitUrl", item.url);
+                              if (item.cleanUrl) {
+                                sessionStorage.setItem("cleanPortraitUrl", item.cleanUrl);
+                              }
+                            }}
+                            className={`relative shrink-0 rounded-[var(--radius-md)] border-2 overflow-hidden transition-all hover:scale-105 ${
+                              isActive
+                                ? "border-[var(--primary)] shadow-[0_0_0_2px_var(--primary-container)]"
+                                : "border-[var(--outline-variant)] opacity-70 hover:opacity-100"
+                            }`}
+                            style={{ width: 72, height: 96 }}
+                          >
+                            <Image
+                              src={item.url}
+                              alt={item.styleLabel}
+                              fill
+                              unoptimized
+                              sizes="72px"
+                              className="object-cover"
+                            />
+                            <span className="absolute bottom-0 left-0 right-0 bg-black/50 px-1 py-0.5 text-[9px] font-semibold text-white truncate text-center">
+                              {item.styleLabel}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
               </div>
             )}
