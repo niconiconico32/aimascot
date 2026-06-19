@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 type CartFieldName = "email";
@@ -12,6 +12,13 @@ type UpsellProduct = {
   name: string;
   price: number;
   emoji: string;
+};
+
+type ShipmentMethod = {
+  carrier: string;
+  serviceName: string;
+  totalPrice: { amount: number; currency: string };
+  deliveryDays: { min: number; max: number };
 };
 
 const PACKAGE_COPY = {
@@ -29,9 +36,18 @@ const UPSELL_PRODUCTS: readonly UpsellProduct[] = [
   { id: "mug", name: "Add a Mug with this portrait", price: 18, emoji: "☕" },
 ];
 
-const SHIPPING_OPTIONS = [
-  { id: "standard", label: "Standard (5–8 business days)", price: 7.99 },
-  { id: "express", label: "Express (2–3 business days)", price: 15.99 },
+const COUNTRIES = [
+  { code: "US", name: "United States" },
+  { code: "CA", name: "Canada" },
+  { code: "GB", name: "United Kingdom" },
+  { code: "IE", name: "Ireland" },
+  { code: "ES", name: "Spain" },
+  { code: "FR", name: "France" },
+  { code: "DE", name: "Germany" },
+  { code: "IT", name: "Italy" },
+  { code: "AU", name: "Australia" },
+  { code: "NZ", name: "New Zealand" },
+  { code: "MX", name: "Mexico" },
 ] as const;
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -65,7 +81,13 @@ function CartPageContent() {
     if (typeof window === "undefined") return "";
     return sessionStorage.getItem("leadEmail") ?? localStorage.getItem("leadEmail") ?? "";
   });
-  const [shippingOption, setShippingOption] = useState<string>("standard");
+  const [shippingCountry, setShippingCountry] = useState("");
+  const [shippingPostcode, setShippingPostcode] = useState("");
+  const [shippingMethods, setShippingMethods] = useState<ShipmentMethod[]>([]);
+  const [selectedShippingIdx, setSelectedShippingIdx] = useState(0);
+  const [isLoadingShipping, setIsLoadingShipping] = useState(false);
+  const [shippingError, setShippingError] = useState<string | null>(null);
+  const shippingDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [giftWrap, setGiftWrap] = useState(false);
   const [smsUpdates, setSmsUpdates] = useState(true);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -96,13 +118,61 @@ function CartPageContent() {
   const basePrice = Number(searchParams.get("price") ?? (packageKey === "digital" ? 49 : 99));
   const packageDetails = PACKAGE_COPY[packageKey];
 
+  const fetchShippingQuotes = useCallback(async (country: string, postcode: string) => {
+    if (!country || !postcode || postcode.length < 3) return;
+
+    setIsLoadingShipping(true);
+    setShippingError(null);
+
+    try {
+      const res = await fetch("/api/shipping-quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ country, postcode, size }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setShippingError(data.error ?? "Could not load shipping options.");
+        setShippingMethods([]);
+        return;
+      }
+
+      setShippingMethods(data.shipmentMethods ?? []);
+      setSelectedShippingIdx(0);
+    } catch {
+      setShippingError("Network error. Please try again.");
+      setShippingMethods([]);
+    } finally {
+      setIsLoadingShipping(false);
+    }
+  }, [size]);
+
+  useEffect(() => {
+    if (packageKey === "digital") return;
+
+    if (shippingDebounce.current) clearTimeout(shippingDebounce.current);
+
+    if (shippingCountry && shippingPostcode.length >= 3) {
+      shippingDebounce.current = setTimeout(() => {
+        fetchShippingQuotes(shippingCountry, shippingPostcode);
+      }, 600);
+    }
+
+    return () => {
+      if (shippingDebounce.current) clearTimeout(shippingDebounce.current);
+    };
+  }, [shippingCountry, shippingPostcode, packageKey, fetchShippingQuotes]);
+
+  const selectedShipping = shippingMethods[selectedShippingIdx];
+
   const summary = useMemo(() => {
     const upsellTotal = UPSELL_PRODUCTS.reduce((sum, product) => {
       return sum + product.price * selectedUpsells[product.id];
     }, 0);
     const giftWrapFee = giftWrap ? 9 : 0;
-    const selectedShipping = SHIPPING_OPTIONS.find((o) => o.id === shippingOption);
-    const shippingFee = packageKey === "digital" ? 0 : (selectedShipping?.price ?? 0);
+    const shippingFee = packageKey === "digital" ? 0 : (selectedShipping?.totalPrice.amount ?? 0);
     const subtotal = basePrice + giftWrapFee + upsellTotal;
 
     let discountAmount = 0;
@@ -116,8 +186,12 @@ function CartPageContent() {
 
     const total = subtotal + shippingFee - discountAmount;
 
-    return { giftWrapFee, shippingFee, subtotal, total, upsellTotal, discountAmount, shippingId: shippingOption };
-  }, [basePrice, giftWrap, packageKey, selectedUpsells, appliedPromotion, shippingOption]);
+    return {
+      giftWrapFee, shippingFee, subtotal, total, upsellTotal, discountAmount,
+      shippingCarrier: selectedShipping?.carrier ?? "",
+      shippingService: selectedShipping?.serviceName ?? "",
+    };
+  }, [basePrice, giftWrap, packageKey, selectedUpsells, appliedPromotion, selectedShipping]);
 
   const validateSingleField = (field: CartFieldName, value: string) => {
     const error = validateCartField(field, value);
@@ -176,7 +250,7 @@ function CartPageContent() {
           // upscale to 4K and send to Gelato / attach to delivery email.
           generatedImageUrl: sessionStorage.getItem("cleanPortraitUrl") ?? "",
           shippingFee: summary.shippingFee,
-          shippingMethod: summary.shippingId,
+          shippingMethod: summary.shippingCarrier ? `${summary.shippingCarrier} ${summary.shippingService}` : "standard",
           giftWrap,
           smsUpdates,
           email,
@@ -306,25 +380,83 @@ function CartPageContent() {
             </label>
 
 
-            {/* Shipping method */}
+            {/* Shipping destination & method */}
             {packageKey !== "digital" ? (
-              <label className="block">
-                <span className="mb-1.5 block text-sm font-semibold text-[var(--on-surface)]">Shipping method</span>
-                <select
-                  value={shippingOption}
-                  onChange={(e) => setShippingOption(e.target.value)}
-                  className="w-full rounded-[var(--radius-default)] border border-[var(--outline-variant)] bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(32,60,185,0.12)]"
-                >
-                  {SHIPPING_OPTIONS.map((opt) => (
-                    <option key={opt.id} value={opt.id}>
-                      {opt.label} — ${opt.price}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1.5 text-xs text-[var(--on-surface-variant)]">
-                  Shipping address will be collected at checkout.
-                </p>
-              </label>
+              <div className="space-y-4">
+                <div className="flex gap-3">
+                  <label className="block flex-1">
+                    <span className="mb-1.5 block text-sm font-semibold text-[var(--on-surface)]">Country</span>
+                    <select
+                      value={shippingCountry}
+                      onChange={(e) => { setShippingCountry(e.target.value); setShippingMethods([]); }}
+                      className="w-full rounded-[var(--radius-default)] border border-[var(--outline-variant)] bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(32,60,185,0.12)]"
+                    >
+                      <option value="">Select country</option>
+                      {COUNTRIES.map((c) => (
+                        <option key={c.code} value={c.code}>{c.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block flex-1">
+                    <span className="mb-1.5 block text-sm font-semibold text-[var(--on-surface)]">Postal code</span>
+                    <input
+                      type="text"
+                      value={shippingPostcode}
+                      onChange={(e) => { setShippingPostcode(e.target.value); setShippingMethods([]); }}
+                      placeholder="e.g. 10001"
+                      autoComplete="postal-code"
+                      maxLength={20}
+                      className="w-full rounded-[var(--radius-default)] border border-[var(--outline-variant)] bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[rgba(32,60,185,0.12)]"
+                    />
+                  </label>
+                </div>
+
+                {isLoadingShipping && (
+                  <div className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-4 py-3">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent" />
+                    <span className="text-sm text-[var(--on-surface-variant)]">Getting shipping rates…</span>
+                  </div>
+                )}
+
+                {shippingError && (
+                  <p className="text-sm text-[var(--error)]">{shippingError}</p>
+                )}
+
+                {shippingMethods.length > 0 && !isLoadingShipping && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold text-[var(--on-surface)]">Shipping method</p>
+                    {shippingMethods.map((method, idx) => (
+                      <label
+                        key={`${method.carrier}-${method.serviceName}`}
+                        className={`flex cursor-pointer items-center gap-3 rounded-[var(--radius-md)] border px-4 py-3 transition ${
+                          idx === selectedShippingIdx
+                            ? "border-[var(--primary)] bg-[var(--primary-container)]/10"
+                            : "border-[var(--outline-variant)] bg-white hover:border-[var(--primary)]/50"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="shipping"
+                          checked={idx === selectedShippingIdx}
+                          onChange={() => setSelectedShippingIdx(idx)}
+                          className="h-4 w-4 shrink-0 text-[var(--primary)]"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-[var(--on-surface)]">
+                            {method.carrier} {method.serviceName}
+                          </p>
+                          <p className="text-xs text-[var(--on-surface-variant)]">
+                            {method.deliveryDays.min}–{method.deliveryDays.max} business days
+                          </p>
+                        </div>
+                        <p className="text-sm font-bold text-[var(--on-surface)] shrink-0">
+                          ${method.totalPrice.amount.toFixed(2)}
+                        </p>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="rounded-[var(--radius-md)] border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-4 py-3">
                 <p className="text-sm font-medium text-[var(--on-surface)]">Digital delivery</p>
@@ -341,7 +473,7 @@ function CartPageContent() {
               disabled={isCheckingOut || !isFormValid}
               className="hidden w-full rounded-[var(--radius-default)] bg-[var(--primary)] px-5 py-4 text-base font-bold text-[var(--on-primary)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 lg:block"
             >
-              {isCheckingOut ? "Redirecting to Stripe…" : `Pay $${summary.total} securely`}
+              {isCheckingOut ? "Redirecting to Stripe…" : `Pay $${summary.total.toFixed(2)} securely`}
             </button>
             {checkoutError ? (
               <p className="text-sm font-medium text-[var(--error)]">{checkoutError}</p>
@@ -488,8 +620,13 @@ function CartPageContent() {
                 )}
                 
                 <div className="flex justify-between text-[var(--on-surface-variant)]">
-                  <span>Shipping</span>
-                  <span>{summary.shippingFee === 0 ? "Free" : `$${summary.shippingFee}`}</span>
+                  <span>
+                    Shipping
+                    {summary.shippingCarrier ? (
+                      <span className="block text-xs">{summary.shippingCarrier} {summary.shippingService}</span>
+                    ) : null}
+                  </span>
+                  <span className="text-right">{summary.shippingFee === 0 ? "Free" : `$${summary.shippingFee.toFixed(2)}`}</span>
                 </div>
                 {summary.discountAmount > 0 && (
                   <div className="flex justify-between text-sm text-[var(--tertiary)]">
@@ -499,7 +636,7 @@ function CartPageContent() {
                 )}
                 <div className="flex justify-between text-base font-extrabold text-[var(--on-surface)]">
                   <span>Total</span>
-                  <span className="text-[var(--primary)]">${summary.total}</span>
+                  <span className="text-[var(--primary)]">$${summary.total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -513,7 +650,7 @@ function CartPageContent() {
         <div className="mx-auto flex max-w-[1080px] items-center justify-between gap-3">
           <div>
             <p className="text-xs text-[var(--on-surface-variant)]">Total</p>
-            <p className="text-xl font-extrabold text-[var(--primary)]">${summary.total}</p>
+            <p className="text-xl font-extrabold text-[var(--primary)]">$${summary.total.toFixed(2)}</p>
           </div>
           <button
             type="button"
