@@ -30,8 +30,8 @@ export default function ContactPage() {
         </h1>
         <p className="mt-4 max-w-3xl text-[28px] leading-relaxed text-[var(--on-surface-variant)] sm:text-[30px]">
           Have a question or need help? Fill out the form below and we&apos;ll get back to you as soon as possible. You can also email us directly at{" "}
-          <a className="font-medium text-[var(--primary)]" href="mailto:help@turnmeroyal.com">
-            help@turnmeroyal.com
+          <a className="font-medium text-[var(--primary)]" href="mailto:hello@crownedportraits.com">
+            hello@crownedportraits.com
           </a>
         </p>
 

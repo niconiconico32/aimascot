@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Be_Vietnam_Pro, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -41,7 +42,10 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block"
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <Analytics />
+        {children}
+      </body>
     </html>
   );
 }
